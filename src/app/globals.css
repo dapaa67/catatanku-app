@@ -10,8 +10,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* --- TAMBAHKAN INI --- */
+  --color-primary: #00A3B5;
+  --color-primary-dark: #008B9B;
+  /* --------------------- */
 }
 
+/* Sisanya biarin aja dulu */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
