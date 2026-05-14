@@ -1,13 +1,208 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// ============================================================
+// CatatanKu — Prisma Schema
+// Stack: Next.js + Supabase + Prisma
+// ============================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+}
+
+// ============================================================
+// ENUM
+// ============================================================
+
+// Tipe transaksi: pemasukan atau pengeluaran
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+// Kategori pengeluaran (hasil prediksi AI — expense)
+enum ExpenseCategory {
+  MAKANAN
+  BELANJA
+  TRANSPORTASI
+  TAGIHAN
+  TEMPAT_TINGGAL
+  KESEHATAN
+  HIBURAN
+  LAIN_LAIN
+}
+
+// Kategori pemasukan (hasil prediksi AI — income)
+enum IncomeCategory {
+  PEMASUKAN   // gaji, honor, dll
+  INVESTASI   // return investasi, dividen
+  LAIN_LAIN
+}
+
+// Rencana pengisian tabungan
+enum SavingPlanType {
+  HARIAN
+  MINGGUAN
+  BULANAN
+}
+
+// Status goal tabungan
+enum GoalStatus {
+  BERLANGSUNG
+  TERCAPAI
+}
+
+// ============================================================
+// TABEL 1: profiles
+// Ekstensi dari Supabase auth.users
+// Dibuat otomatis via database trigger saat user register
+// ============================================================
+
+model Profile {
+  id         String   @id @default(uuid())       // sama dengan auth.users.id
+  email      String   @unique
+  fullName   String   @map("full_name")
+  avatarUrl  String?  @map("avatar_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relasi
+  wallets             Wallet[]
+  savingsGoals        SavingsGoal[]
+  savingsTransactions SavingsTransaction[]
+
+  @@map("profiles")
+}
+
+// ============================================================
+// TABEL 2: wallets (Dompet)
+// Satu user bisa punya banyak dompet (BCA, Cash, Dana, dll)
+// Sesuai mockup: ada nama, warna tema, dan saldo awal
+// ============================================================
+
+model Wallet {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  name          String                          // contoh: "Dompet Utama", "BCA", "Dana"
+  balance       Decimal  @default(0) @db.Decimal(15, 2)
+  initialBalance Decimal @default(0) @map("initial_balance") @db.Decimal(15, 2)
+  color         String   @default("#1D9E75")    // hex color dari color picker mockup
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relasi
+  user         Profile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+// ============================================================
+// TABEL 3: transactions
+// Tabel terpenting — mencatat semua pemasukan & pengeluaran
+// Kategori disimpan sebagai String (hasil prediksi AI)
+// bukan FK ke tabel lain, supaya fleksibel
+// ============================================================
+
+model Transaction {
+  id              String          @id @default(uuid())
+  walletId        String          @map("wallet_id")
+  type            TransactionType                       // INCOME atau EXPENSE
+  amount          Decimal         @db.Decimal(15, 2)
+  description     String                               // input user, dikirim ke AI untuk klasifikasi
+  category        String                               // hasil prediksi AI (string dari enum di atas)
+  date            DateTime                             // bisa diubah user (bukan hanya created_at)
+  note            String?                              // catatan tambahan opsional
+  photoUrl        String?         @map("photo_url")    // foto opsional yang dilampirkan user
+  receiptId       String?         @map("receipt_id")   // FK ke receipts jika dari scan struk
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relasi
+  wallet          Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  receipt         Receipt?        @relation(fields: [receiptId], references: [id])
+
+  @@index([walletId])
+  @@index([date])
+  @@index([type])
+  @@index([category])
+  @@map("transactions")
+}
+
+// ============================================================
+// TABEL 4: receipts
+// Hasil scan struk via OCR (opsional)
+// Disimpan terpisah supaya tabel transactions tetap bersih
+// ============================================================
+
+model Receipt {
+  id            String   @id @default(uuid())
+  imageUrl      String   @map("image_url")      // URL gambar di Supabase Storage
+  ocrRawText    String?  @map("ocr_raw_text")   // teks mentah hasil OCR dari FastAPI
+  parsedAmount  Decimal? @map("parsed_amount") @db.Decimal(15, 2)  // nominal yang berhasil di-parse
+  parsedDate    DateTime? @map("parsed_date")   // tanggal dari struk jika terbaca
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relasi
+  transaction   Transaction?
+
+  @@map("receipts")
+}
+
+// ============================================================
+// TABEL 5: savings_goals (Target Tabungan)
+// Sesuai mockup: nama, foto, target, rencana pengisian,
+// estimasi tercapai, status berlangsung/tercapai
+// ============================================================
+
+model SavingsGoal {
+  id              String         @id @default(uuid())
+  userId          String         @map("user_id")
+  name            String                              // contoh: "PS5 + Game Bundle"
+  photoUrl        String?        @map("photo_url")    // foto goal (opsional, sesuai mockup)
+  targetAmount    Decimal        @map("target_amount") @db.Decimal(15, 2)
+  currentAmount   Decimal        @default(0) @map("current_amount") @db.Decimal(15, 2)
+  deadline        DateTime?                           // tanggal target tercapai (opsional)
+
+  // Rencana pengisian (dari Kalkulator Target di mockup)
+  planType        SavingPlanType? @map("plan_type")   // HARIAN, MINGGUAN, atau BULANAN
+  planAmount      Decimal?        @map("plan_amount") @db.Decimal(15, 2)  // nominal per periode
+
+  status          GoalStatus     @default(BERLANGSUNG)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relasi
+  user            Profile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  savingsTransactions SavingsTransaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("savings_goals")
+}
+
+// ============================================================
+// TABEL 6: savings_transactions (Riwayat Pengisian Tabungan)
+// Setiap kali user isi tabungan → masuk ke sini
+// Bisa negatif (koreksi salah input, sesuai mockup)
+// ============================================================
+
+model SavingsTransaction {
+  id        String      @id @default(uuid())
+  goalId    String      @map("goal_id")
+  userId    String      @map("user_id")
+  amount    Decimal     @db.Decimal(15, 2)   // positif = isi, negatif = koreksi
+  note      String?                          // contoh: "Pengisian rutin", "Koreksi salah input"
+  date      DateTime    @default(now())
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  // Relasi
+  goal      SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user      Profile     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([goalId])
+  @@index([userId])
+  @@map("savings_transactions")
 }
