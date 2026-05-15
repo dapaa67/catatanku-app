@@ -88,6 +88,7 @@ model Wallet {
   balance       Decimal  @default(0) @db.Decimal(15, 2)
   initialBalance Decimal @default(0) @map("initial_balance") @db.Decimal(15, 2)
   color         String   @default("#1D9E75")    // hex color dari color picker mockup
+  imageUrl      String?  @map("image_url")      // background custom image
   isDefault     Boolean  @default(false) @map("is_default")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
