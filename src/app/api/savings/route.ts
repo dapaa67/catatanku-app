@@ -12,7 +12,15 @@ export async function GET() {
     include: { savingsTransactions: { orderBy: { date: "desc" }, take: 5 } }
   })
 
-  return NextResponse.json({ data: goals, message: "Berhasil mengambil data tabungan" })
+  const data = goals.map(g => ({
+    ...g,
+    progressPercent: Number(g.targetAmount) > 0
+      ? Math.round((Number(g.currentAmount) / Number(g.targetAmount)) * 100)
+      : 0,
+    remainingAmount: Number(g.targetAmount) - Number(g.currentAmount)
+  }))
+
+  return NextResponse.json({ data, message: "Berhasil mengambil data tabungan" })
 }
 
 export async function POST(req: NextRequest) {

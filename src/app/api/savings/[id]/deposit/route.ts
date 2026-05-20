@@ -18,10 +18,13 @@ export async function POST(
   const body = await req.json()
   const { amount, note, date } = body
 
-  if (!amount || amount === 0)
+  if (amount === undefined || amount === null || Number(amount) === 0)
     return NextResponse.json({ error: "Jumlah deposit tidak boleh 0" }, { status: 400 })
 
   const newAmount = Number(goal.currentAmount) + Number(amount)
+  if (newAmount < 0)
+    return NextResponse.json({ error: "Koreksi melebihi jumlah tabungan yang ada" }, { status: 400 })
+
   const isAchieved = newAmount >= Number(goal.targetAmount)
 
   const [transaction] = await prisma.$transaction([
@@ -45,6 +48,6 @@ export async function POST(
 
   return NextResponse.json({
     data: transaction,
-    message: isAchieved ? "Selamat! Target tabungan tercapai!" : "Deposit berhasil ditambahkan"
+    message: isAchieved ? "Selamat! Target tabungan tercapai" : "Deposit berhasil ditambahkan"
   }, { status: 201 })
 }

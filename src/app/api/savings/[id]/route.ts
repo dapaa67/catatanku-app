@@ -23,7 +23,16 @@ export async function GET(
 
   if (!goal) return NextResponse.json({ error: "Tabungan tidak ditemukan" }, { status: 404 })
 
-  return NextResponse.json({ data: goal, message: "Berhasil mengambil detail tabungan" })
+  return NextResponse.json({
+    data: {
+      ...goal,
+      progressPercent: Number(goal.targetAmount) > 0
+        ? Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100)
+        : 0,
+      remainingAmount: Number(goal.targetAmount) - Number(goal.currentAmount)
+    },
+    message: "Berhasil mengambil detail tabungan"
+  })
 }
 
 export async function PUT(
@@ -38,7 +47,6 @@ export async function PUT(
   if (!goal) return NextResponse.json({ error: "Tabungan tidak ditemukan" }, { status: 404 })
 
   const body = await req.json()
-
   const newTarget = body.targetAmount ?? Number(goal.targetAmount)
   const isAchieved = Number(goal.currentAmount) >= newTarget
 
