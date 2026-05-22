@@ -20,7 +20,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json()
   const updated = await prisma.wallet.update({
     where: { id },
-    data: { name: body.name ?? wallet.name, color: body.color ?? wallet.color }
+    data: { 
+      name: body.name ?? wallet.name, 
+      color: body.color ?? wallet.color,
+      balance: body.balance !== undefined ? body.balance : wallet.balance
+    }
   })
   return NextResponse.json({ data: updated, message: "Dompet berhasil diperbarui" })
 }

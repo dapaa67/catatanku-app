@@ -63,21 +63,28 @@ export async function GET(req: NextRequest) {
       percentage: totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0
     }))
 
-  const last6Months = await Promise.all(
-    Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(year, month - 1 - i, 1)
-      const mFrom = new Date(d.getFullYear(), d.getMonth(), 1)
-      const mTo = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
-      return prisma.transaction.findMany({
-        where: { walletId: { in: walletIds }, date: { gte: mFrom, lte: mTo } }
-      }).then(txs => ({
-        month: d.toLocaleString("id-ID", { month: "short" }),
-        year: d.getFullYear(),
-        income: txs.filter(t => t.type === "INCOME").reduce((s, t) => s + Number(t.amount), 0),
-        expense: txs.filter(t => t.type === "EXPENSE").reduce((s, t) => s + Number(t.amount), 0)
-      }))
+  const sixMonthsAgo = new Date(year, month - 6, 1)
+  const allTxsForTrend = await prisma.transaction.findMany({
+    where: { walletId: { in: walletIds }, date: { gte: sixMonthsAgo, lte: to } }
+  })
+
+  const last6Months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(year, month - 1 - i, 1)
+    const mFrom = new Date(d.getFullYear(), d.getMonth(), 1).getTime()
+    const mTo = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).getTime()
+    
+    const txs = allTxsForTrend.filter(t => {
+      const txTime = t.date.getTime()
+      return txTime >= mFrom && txTime <= mTo
     })
-  )
+    
+    return {
+      month: d.toLocaleString("id-ID", { month: "short" }),
+      year: d.getFullYear(),
+      income: txs.filter(t => t.type === "INCOME").reduce((s, t) => s + Number(t.amount), 0),
+      expense: txs.filter(t => t.type === "EXPENSE").reduce((s, t) => s + Number(t.amount), 0)
+    }
+  })
 
   const savingRate = totalIncome > 0
     ? Math.round(((totalIncome - totalExpense) / totalIncome) * 100)

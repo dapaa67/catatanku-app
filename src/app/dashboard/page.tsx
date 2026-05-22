@@ -5,6 +5,8 @@ import { WalletCard } from "@/components/WalletCard";
 import { SelectWalletModal, Wallet } from "@/components/SelectWalletModal";
 import { AddWalletModal, NewWalletData } from "@/components/AddWalletModal";
 import { TransferBalanceModal } from "@/components/TransferBalanceModal";
+import Link from "next/link";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 
 // ============================================================
 // Types sesuai response dari backend
@@ -25,6 +27,18 @@ interface SummaryData {
   totalIncome: number;
   totalExpense: number;
   savingRate: number;
+  topExpenseCategories?: { category: string, amount: number, percentage: number }[];
+  topIncomeCategories?: { category: string, amount: number, percentage: number }[];
+  trendLast6Months?: { month: string, year: number, income: number, expense: number }[];
+}
+
+interface DashboardTransaction {
+  id: string;
+  type: "INCOME" | "EXPENSE";
+  amount: string | number;
+  category: string;
+  description: string;
+  date: string;
 }
 
 // Konversi ApiWallet → Wallet (interface yang dipakai komponen)
@@ -62,15 +76,19 @@ export default function DashboardPage() {
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<Wallet | null>(null);
   const [activeWalletId, setActiveWalletId] = useState<string | undefined>();
+  const [recentTransactions, setRecentTransactions] = useState<DashboardTransaction[]>([]);
+  const [chartType, setChartType] = useState<"income" | "expense">("expense");
+  const [userName, setUserName] = useState<string>("Loading...");
 
   // ── Fetch wallets & summary dari API ──────────────────────
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [walletsRes, summaryRes] = await Promise.all([
+      const [walletsRes, summaryRes, transactionsRes] = await Promise.all([
         fetch("/api/wallets"),
         fetch("/api/summary"),
+        fetch("/api/transactions")
       ]);
 
       if (!walletsRes.ok) throw new Error("Gagal mengambil data dompet");
@@ -78,14 +96,25 @@ export default function DashboardPage() {
 
       const walletsJson = await walletsRes.json();
       const summaryJson = await summaryRes.json();
+      const transactionsJson = await transactionsRes.json();
 
       const fetchedWallets: Wallet[] = (walletsJson.data as ApiWallet[]).map(toWallet);
       setWallets(fetchedWallets);
       setSummary(summaryJson.data as SummaryData);
+      setRecentTransactions((transactionsJson.data || []).slice(0, 4));
 
       // Set dompet aktif ke yang pertama jika belum ada
       if (!activeWalletId && fetchedWallets.length > 0) {
         setActiveWalletId(fetchedWallets[0].id);
+      }
+
+      // Fetch user
+      const supabase = createBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const email = user.email || "";
+        const name = user.user_metadata?.name || email.split("@")[0] || "User";
+        setUserName(name);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
@@ -110,7 +139,7 @@ export default function DashboardPage() {
         const res = await fetch(`/api/wallets/${walletToEdit.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: data.name, color: data.color }),
+          body: JSON.stringify({ name: data.name, color: data.color, balance: data.balance }),
         });
         if (!res.ok) throw new Error("Gagal memperbarui dompet");
       } else {
@@ -175,11 +204,11 @@ export default function DashboardPage() {
   // Render
   // ============================================================
   return (
-    <div className="flex flex-col gap-8 w-full">
+    <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Dashboard */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-        <p className="text-slate-400 text-sm mt-1">Selamat datang kembali 👋</p>
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-bold text-slate-500">Senin, 27 April 2026</p>
+        <p className="text-sm font-bold text-slate-800">Selamat Sore, {userName}</p>
       </div>
 
       {/* Error state */}
@@ -197,11 +226,11 @@ export default function DashboardPage() {
 
       {/* Total Saldo */}
       <div>
-        <p className="text-sm font-medium text-slate-500 mb-1">Jumlah Saldo</p>
+        <p className="text-xs font-medium text-slate-500 mb-0.5">Jumlah Saldo</p>
         {isLoading ? (
-          <div className="h-10 w-56 bg-slate-200 animate-pulse rounded-xl" />
+          <div className="h-6 w-32 bg-slate-200 animate-pulse rounded-xl" />
         ) : (
-          <h2 className="text-4xl font-extrabold text-slate-800">
+          <h2 className="text-xl font-bold text-slate-800">
             {isBalanceHidden
               ? "Rp ••••••••"
               : new Intl.NumberFormat("id-ID", {
@@ -241,31 +270,183 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Summary ringkas (income & expense bulan ini) */}
-      {!isLoading && summary && (
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-2xl bg-green-50 border border-green-100 p-4">
-            <p className="text-xs text-green-600 font-medium mb-1">Pemasukan Bulan Ini</p>
-            <p className="text-lg font-bold text-green-700">
-              {new Intl.NumberFormat("id-ID", {
-                style: "currency",
-                currency: "IDR",
-                minimumFractionDigits: 0,
-              }).format(summary.totalIncome)}
-            </p>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-2">
+        {/* Left Column: Laporan bulan ini */}
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-slate-800 text-sm">Laporan bulan ini</h3>
+            <Link href="/analisis" className="text-xs font-bold text-primary hover:underline">Lihat lainnya</Link>
           </div>
-          <div className="rounded-2xl bg-red-50 border border-red-100 p-4">
-            <p className="text-xs text-red-500 font-medium mb-1">Pengeluaran Bulan Ini</p>
-            <p className="text-lg font-bold text-red-600">
-              {new Intl.NumberFormat("id-ID", {
-                style: "currency",
-                currency: "IDR",
-                minimumFractionDigits: 0,
-              }).format(summary.totalExpense)}
-            </p>
+          
+          <div className="bg-white border border-primary/20 rounded-3xl p-6 shadow-sm flex flex-col gap-6">
+            <div className="grid grid-cols-2 gap-2 border-b border-slate-100 pb-4">
+              <button 
+                onClick={() => setChartType("income")}
+                className={`flex flex-col p-3 rounded-xl transition-colors cursor-pointer text-left ${chartType === "income" ? "bg-green-50/70 border border-green-100" : "hover:bg-slate-50 border border-transparent"}`}
+              >
+                <span className={`text-xs font-bold mb-1 ${chartType === "income" ? "text-green-700" : "text-slate-600"}`}>Total Pemasukan</span>
+                <span className="text-sm font-bold text-green-500">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(summary?.totalIncome || 0)}
+                </span>
+              </button>
+              <button 
+                onClick={() => setChartType("expense")}
+                className={`flex flex-col p-3 rounded-xl transition-colors cursor-pointer text-left ${chartType === "expense" ? "bg-red-50/70 border border-red-100" : "hover:bg-slate-50 border border-transparent"}`}
+              >
+                <span className={`text-xs font-bold mb-1 ${chartType === "expense" ? "text-red-700" : "text-slate-600"}`}>Total Pengeluaran</span>
+                <span className="text-sm font-bold text-red-500">
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(summary?.totalExpense || 0)}
+                </span>
+              </button>
+            </div>
+            
+            {/* Chart Graphic Area */}
+            <div className="relative h-40 w-full mt-2">
+              {(() => {
+                const maxVal = summary?.trendLast6Months?.reduce((max, t) => Math.max(max, chartType === "expense" ? t.expense : t.income), 0) || 100000;
+                const formatY = (val: number) => {
+                  if (val >= 1000000) return (val / 1000000).toFixed(0) + "Jt";
+                  if (val >= 1000) return (val / 1000).toFixed(0) + "K";
+                  return val.toString();
+                };
+                const points = summary?.trendLast6Months?.map((t, i, arr) => {
+                  const x = (i / (arr.length - 1)) * 100;
+                  const val = chartType === "expense" ? t.expense : t.income;
+                  const y = 100 - (val / maxVal) * 100;
+                  return `${x} ${y}`;
+                }).join(" L ") || "0 100 L 100 100";
+                const pathD = `M ${points}`;
+                const pathAreaD = `M ${points} L 100 100 L 0 100 Z`;
+
+                const firstLabel = summary?.trendLast6Months?.[0]?.month || "01/04";
+                const lastLabel = summary?.trendLast6Months?.[5]?.month || "30/04";
+                const lastVal = summary?.trendLast6Months?.[5] ? (chartType === "expense" ? summary.trendLast6Months[5].expense : summary.trendLast6Months[5].income) : 0;
+                
+                const lineColor = chartType === "expense" ? "#ef4444" : "#22c55e"; // red-500 or green-500
+
+                return (
+                  <>
+                    {/* Y Axis Labels */}
+                    <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between text-[10px] font-bold text-slate-400 pb-5 items-end">
+                      <span>{formatY(maxVal)}</span>
+                      <span>{formatY(maxVal * 0.66)}</span>
+                      <span>{formatY(maxVal * 0.33)}</span>
+                      <span>0</span>
+                    </div>
+                    
+                    {/* Grid Lines */}
+                    <div className="absolute inset-0 right-10 flex flex-col justify-between pb-5">
+                      <div className="border-t border-dashed border-slate-200 w-full"></div>
+                      <div className="border-t border-dashed border-slate-200 w-full"></div>
+                      <div className="border-t border-dashed border-slate-200 w-full"></div>
+                      <div className="border-t border-dashed border-slate-200 w-full"></div>
+                    </div>
+                    
+                    {/* Chart Line Representation */}
+                    <div className="absolute inset-0 right-10 pb-5">
+                      <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                        <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" />
+                        <path d={pathAreaD} fill="url(#grad)" opacity="0.1" />
+                        <defs>
+                          <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor={lineColor} stopOpacity="1" />
+                            <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                      {/* Tooltip */}
+                      <div className="absolute top-0 right-0 bg-white border border-slate-200 shadow-md rounded-md px-2 py-1 flex flex-col items-center translate-x-4 -translate-y-4">
+                        <span className="text-xs font-bold text-slate-800 leading-tight">
+                          {new Intl.NumberFormat("id-ID").format(lastVal)}
+                        </span>
+                        <span className="text-[10px] text-slate-500 leading-tight">{lastLabel}</span>
+                      </div>
+                    </div>
+
+                    {/* X Axis Labels */}
+                    <div className="absolute bottom-0 left-0 right-10 flex justify-between text-[10px] font-bold text-slate-400">
+                      <span>{firstLabel}</span>
+                      <span>{lastLabel}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-6 mt-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${chartType === "income" ? "bg-green-500" : "bg-red-500"}`}></div>
+                <span className="text-[10px] font-medium text-slate-500">Bulan ini</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-slate-300"></div>
+                <span className="text-[10px] font-medium text-slate-500">Rata-rata 3 bulan sebelumnya</span>
+                <span className="w-3 h-3 rounded-full bg-slate-200 text-slate-500 text-[8px] flex items-center justify-center font-bold">?</span>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Right Column: Kategori terbesar */}
+        <div className="flex flex-col gap-3">
+          <h3 className="font-bold text-slate-800 text-sm">Kategori terbesar</h3>
+          
+          <div className="bg-white border border-primary/20 rounded-3xl p-6 shadow-sm flex flex-col flex-1">
+            <div className="flex flex-col gap-6 flex-1">
+              {summary?.topExpenseCategories && summary.topExpenseCategories.length > 0 ? (
+                summary.topExpenseCategories.slice(0, 4).map((item) => (
+                  <div key={item.category} className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-sm font-bold text-slate-800">
+                      <span>{item.category}</span>
+                      <span>{item.percentage}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-600 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: `${item.percentage}%` }}></div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-500 italic flex items-center justify-center h-full">Belum ada pengeluaran bulan ini.</div>
+              )}
+            </div>
+
+            {/* Prediksi bulan depan */}
+            <div className="mt-6 bg-primary/5 border border-primary/10 rounded-2xl p-4 flex flex-col gap-1 w-fit">
+              <span className="text-xs font-bold text-primary">Prediksi bulan depan</span>
+              <span className="text-sm font-bold text-slate-800">Rp 11,45 jt</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section: Transaksi terakhir */}
+      <div className="bg-white border border-primary/20 rounded-3xl p-6 shadow-sm flex flex-col gap-4 mt-2">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-bold text-slate-800 text-sm">Transaksi terakhir</h3>
+          <Link href="/transaksi" className="text-xs font-bold text-primary hover:underline">Lihat semua</Link>
+        </div>
+        
+        <div className="flex flex-col">
+          {recentTransactions.length > 0 ? (
+            recentTransactions.map((item, idx, arr) => (
+              <div key={item.id} className={`flex justify-between items-center py-3 ${idx !== arr.length - 1 ? 'border-b border-primary/20' : ''}`}>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-800">{item.description}</span>
+                  <span className="text-[10px] font-bold text-slate-500">{item.category} - {new Date(item.date).toLocaleDateString("id-ID")}</span>
+                </div>
+                <span className={`text-xs font-bold ${item.type === "EXPENSE" ? "text-red-500" : "text-green-500"}`}>
+                  {item.type === "EXPENSE" ? "-" : "+"}
+                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(item.amount))}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-sm text-slate-500 italic py-4 text-center">Belum ada transaksi.</div>
+          )}
+        </div>
+      </div>
 
       {/* Modal Pilih Dompet */}
       <SelectWalletModal
