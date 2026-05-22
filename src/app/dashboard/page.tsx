@@ -411,12 +411,6 @@ export default function DashboardPage() {
                 <div className="text-sm text-slate-500 italic flex items-center justify-center h-full">Belum ada pengeluaran bulan ini.</div>
               )}
             </div>
-
-            {/* Prediksi bulan depan */}
-            <div className="mt-6 bg-primary/5 border border-primary/10 rounded-2xl p-4 flex flex-col gap-1 w-fit">
-              <span className="text-xs font-bold text-primary">Prediksi bulan depan</span>
-              <span className="text-sm font-bold text-slate-800">Rp 11,45 jt</span>
-            </div>
           </div>
         </div>
       </div>
