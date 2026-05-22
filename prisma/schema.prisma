@@ -117,7 +117,7 @@ model Transaction {
   date            DateTime                             // bisa diubah user (bukan hanya created_at)
   note            String?                              // catatan tambahan opsional
   photoUrl        String?         @map("photo_url")    // foto opsional yang dilampirkan user
-  receiptId       String?         @map("receipt_id")   // FK ke receipts jika dari scan struk
+  receiptId       String?         @unique @map("receipt_id")   // FK ke receipts jika dari scan struk
   createdAt       DateTime        @default(now()) @map("created_at")
   updatedAt       DateTime        @updatedAt @map("updated_at")
 

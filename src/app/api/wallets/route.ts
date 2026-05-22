@@ -22,6 +22,18 @@ export async function POST(req: NextRequest) {
 
   if (!name) return NextResponse.json({ error: "Nama dompet tidak boleh kosong" }, { status: 400 })
 
+  // Pastikan profile user ada (fallback jika trigger Supabase auth belum jalan/belum diset)
+  const existingProfile = await prisma.profile.findUnique({ where: { id: user.id } })
+  if (!existingProfile) {
+    await prisma.profile.create({
+      data: {
+        id: user.id,
+        email: user.email || "",
+        fullName: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+      }
+    })
+  }
+
   const wallet = await prisma.wallet.create({
     data: {
       userId: user.id,

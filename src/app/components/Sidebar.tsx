@@ -12,12 +12,16 @@ import {
   LogOut // Tambahin icon logout biar makin mirip figma
 } from "lucide-react";
 
+import { Plus } from "lucide-react"; // Import icon Plus yang dibutuhkan
+
 const navItems = [
-  { label: "Dashboard",   href: "/dashboard",   icon: LayoutDashboard },
-  { label: "Transaksi",   href: "/transaksi",   icon: ArrowLeftRight  },
-  { label: "Laporan",      href: "/laporan",      icon: PieChart        },
-  { label: "Anggaran",     href: "/anggaran",      icon: Target          },
-  { label: "Pengaturan",   href: "/pengaturan",    icon: Settings        },
+  { label: "Dashboard",        href: "/dashboard",        icon: LayoutDashboard },
+  { label: "Tambah Transaksi", href: "/transaksi/tambah", icon: Plus },
+  { label: "Transaksi",        href: "/transaksi",        icon: ArrowLeftRight  },
+  { label: "Analisis",         href: "/analisis",         icon: PieChart        },
+  { label: "Tabungan",         href: "/tabungan",         icon: Target          },
+  { label: "AI Assistant",     href: "/ai-assistant",     icon: NotebookPen     },
+  { label: "Pengaturan",       href: "/pengaturan",       icon: Settings        },
 ];
 
 export default function Sidebar() {
@@ -41,7 +45,50 @@ export default function Sidebar() {
       {/* Nav Items */}
       <nav className="flex flex-col gap-2 flex-1">
         {navItems.map(({ label, href, icon: Icon }) => {
-          // Cek apakah halaman aktif, sesuaikan logic href lo
+          // Khusus untuk Tambah Transaksi yang sekarang punya submenu
+          if (href === "/transaksi/tambah") {
+            const isParentActive = pathname.startsWith("/transaksi/tambah");
+            
+            return (
+              <div key="tambah-transaksi" className="flex flex-col gap-1">
+                <div
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    isParentActive
+                      ? "text-white"
+                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  {label}
+                </div>
+                
+                {/* Submenu */}
+                <div className="flex flex-col pl-12 gap-1 mt-1">
+                  <Link
+                    href="/transaksi/tambah/manual"
+                    className={`block py-2 text-sm font-medium transition-colors ${
+                      pathname === "/transaksi/tambah/manual"
+                        ? "text-white"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    Manual
+                  </Link>
+                  <Link
+                    href="/transaksi/tambah/scan"
+                    className={`block py-2 px-3 -ml-3 rounded-lg text-sm font-medium transition-colors ${
+                      pathname === "/transaksi/tambah/scan"
+                        ? "bg-white/20 text-white shadow-inner"
+                        : "text-white/60 hover:text-white"
+                    }`}
+                  >
+                    Scan Struk
+                  </Link>
+                </div>
+              </div>
+            );
+          }
+
           const isActive = pathname === href || (pathname === "/" && href === "/dashboard");
           
           return (
@@ -50,7 +97,7 @@ export default function Sidebar() {
               href={href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
                 ${isActive
-                  ? "bg-white/20 shadow-inner" // Efek highlight putih transparan pas aktif
+                  ? "bg-white/20 shadow-inner"
                   : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
             >

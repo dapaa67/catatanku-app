@@ -61,11 +61,14 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
   };
 
   const handleSave = () => {
-    if (!name.trim() || !balance) return; // Simple validation
+    if (!name.trim()) {
+      alert("Nama tabungan tidak boleh kosong");
+      return;
+    }
     
     onSave({
       name,
-      balance: Number(balance),
+      balance: balance === "" ? 0 : Number(balance),
       color: selectedColor || "#00A3B5", // Fallback teal
       imageUrl: selectedImageUrl
     });
