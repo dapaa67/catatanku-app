@@ -75,20 +75,42 @@ export default function DashboardPage() {
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
   const [walletToEdit, setWalletToEdit] = useState<Wallet | null>(null);
-  const [activeWalletId, setActiveWalletId] = useState<string | undefined>();
+  const [activeWalletId, setActiveWalletId] = useState<string>("all");
   const [recentTransactions, setRecentTransactions] = useState<DashboardTransaction[]>([]);
   const [chartType, setChartType] = useState<"income" | "expense">("expense");
   const [userName, setUserName] = useState<string>("Loading...");
+  
+  const [currentDate, setCurrentDate] = useState<string>("");
+  const [greeting, setGreeting] = useState<string>("Halo");
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      setCurrentDate(now.toLocaleDateString('id-ID', options));
+
+      const hour = now.getHours();
+      if (hour < 11) setGreeting("Selamat Pagi");
+      else if (hour < 15) setGreeting("Selamat Siang");
+      else if (hour < 18) setGreeting("Selamat Sore");
+      else setGreeting("Selamat Malam");
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Fetch wallets & summary dari API ──────────────────────
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      const q = activeWalletId !== "all" ? `?walletId=${activeWalletId}` : "";
       const [walletsRes, summaryRes, transactionsRes] = await Promise.all([
         fetch("/api/wallets"),
-        fetch("/api/summary"),
-        fetch("/api/transactions")
+        fetch(`/api/summary${q}`),
+        fetch(`/api/transactions${q}`)
       ]);
 
       if (!walletsRes.ok) throw new Error("Gagal mengambil data dompet");
@@ -102,11 +124,6 @@ export default function DashboardPage() {
       setWallets(fetchedWallets);
       setSummary(summaryJson.data as SummaryData);
       setRecentTransactions((transactionsJson.data || []).slice(0, 4));
-
-      // Set dompet aktif ke yang pertama jika belum ada
-      if (!activeWalletId && fetchedWallets.length > 0) {
-        setActiveWalletId(fetchedWallets[0].id);
-      }
 
       // Fetch user
       const supabase = createBrowserClient();
@@ -125,7 +142,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchData]);
 
   // ── Ambil data dompet aktif ────────────────────────────────
   const activeWallet = wallets.find((w) => w.id === activeWalletId) || wallets[0];
@@ -207,8 +224,8 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6 w-full pb-10">
       {/* Header Dashboard */}
       <div className="flex flex-col gap-1">
-        <p className="text-xs font-bold text-slate-500">Senin, 27 April 2026</p>
-        <p className="text-sm font-bold text-slate-800">Selamat Sore, {userName}</p>
+        <p className="text-xs font-bold text-slate-500">{currentDate || "Memuat tanggal..."}</p>
+        <p className="text-sm font-bold text-slate-800">{greeting}, {userName}</p>
       </div>
 
       {/* Error state */}
@@ -247,6 +264,15 @@ export default function DashboardPage() {
       <div className="w-full">
         {isLoading ? (
           <WalletCardSkeleton />
+        ) : activeWalletId === "all" ? (
+          <WalletCard
+            name="Semua Dompet"
+            balance={totalBalance}
+            color="#0f9a95"
+            isBalanceHidden={isBalanceHidden}
+            onToggleHideBalance={() => setIsBalanceHidden(!isBalanceHidden)}
+            onEditClick={() => setIsModalOpen(true)}
+          />
         ) : activeWallet ? (
           <WalletCard
             name={activeWallet.name}

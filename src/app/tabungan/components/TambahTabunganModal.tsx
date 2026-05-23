@@ -25,6 +25,9 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [showEstimasiModal, setShowEstimasiModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  const [estimasiData, setEstimasiData] = useState<{ target: number; plan: number; days: number; date: string } | null>(null);
+  const [isEstimasiLoading, setIsEstimasiLoading] = useState(false);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -77,28 +80,55 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
     setDisplayPlan(val ? new Intl.NumberFormat("id-ID").format(Number(val)) : "");
   };
 
-  const calculateEstimasi = () => {
+  const fetchEstimasi = async () => {
     const target = Number(rawTarget) || 0;
     const plan = Number(rawPlan) || 0;
-    if (plan <= 0 || target <= 0) return null;
+    if (plan <= 0 || target <= 0) {
+      setErrorMsg("Isi target dan nominal pengisian dulu untuk melihat estimasi.");
+      return;
+    }
     
-    let daysPerPlan = 1;
-    if (rencana === "Mingguan") daysPerPlan = 7;
-    if (rencana === "Bulanan") daysPerPlan = 30;
+    setErrorMsg(null);
+    setIsEstimasiLoading(true);
+    
+    try {
+      const res = await fetch("https://yobby15-catatanku-fastapi.hf.space/api/predict/tabungan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          terkumpul: 0,
+          target: target,
+          nabung: plan
+        })
+      });
+      
+      if (!res.ok) throw new Error("Gagal mengambil prediksi AI");
+      const json = await res.json();
+      
+      const estimasiKaliNabung = json.estimasi_kali_nabung || 1;
+      
+      let daysPerPlan = 1;
+      if (rencana === "Mingguan") daysPerPlan = 7;
+      if (rencana === "Bulanan") daysPerPlan = 30;
 
-    const totalDaysNeeded = Math.ceil((target / plan) * daysPerPlan);
-    const estimatedDate = new Date();
-    estimatedDate.setDate(estimatedDate.getDate() + totalDaysNeeded);
+      const totalDaysNeeded = estimasiKaliNabung * daysPerPlan;
+      const estimatedDate = new Date();
+      estimatedDate.setDate(estimatedDate.getDate() + totalDaysNeeded);
 
-    return {
-      target,
-      plan,
-      days: totalDaysNeeded,
-      date: estimatedDate.toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
-    };
+      setEstimasiData({
+        target,
+        plan,
+        days: totalDaysNeeded,
+        date: estimatedDate.toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })
+      });
+      setShowEstimasiModal(true);
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Terjadi kesalahan saat mengambil prediksi AI");
+    } finally {
+      setIsEstimasiLoading(false);
+    }
   };
-
-  const estimasiData = calculateEstimasi();
 
   const handleSubmit = async () => {
     setErrorMsg(null);
@@ -233,31 +263,18 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
                 />
                 <div 
                   className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center cursor-pointer hover:scale-110 transition-transform"
-                  onClick={() => {
-                    if (rawTarget && rawPlan) {
-                      setErrorMsg(null);
-                      setShowEstimasiModal(true);
-                    } else {
-                      setErrorMsg("Isi target dan nominal pengisian dulu untuk melihat estimasi.");
-                    }
-                  }}
+                  onClick={fetchEstimasi}
                 >
-                   <span className="text-[10px] text-purple-400 font-bold leading-none mb-0.5">...</span>
-                   <Calendar className="w-5 h-5 text-primary" />
+                   
+                   {isEstimasiLoading ? (
+                     <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                   ) : (
+                     <Calendar className="w-5 h-5 text-primary" />
+                   )}
                 </div>
               </div>
             </div>
 
-            {/* Calculator Link */}
-            <div className="text-center mb-8">
-              <p className="text-xs text-slate-500 font-medium mb-2">Masih bingung mengisi rencana pengisian ?</p>
-              <button 
-                onClick={() => setView("calculator")}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                Hitung Dengan Kalkulator Target
-              </button>
-            </div>
 
             {/* Actions */}
             <div className="flex justify-center gap-4">

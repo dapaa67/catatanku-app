@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   const transactions = await prisma.transaction.findMany({
     where: {
-      walletId: walletId ? walletId : { in: walletIds },
+      walletId: walletId && walletId !== "all" ? walletId : { in: walletIds },
       ...(type && { type: type as "INCOME" | "EXPENSE" }),
       ...(category && { category }),
       ...(from && to && { date: { gte: new Date(from), lte: new Date(to) } })

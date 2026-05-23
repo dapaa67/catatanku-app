@@ -48,6 +48,26 @@ export function SelectWalletModal({
         <div className="overflow-y-auto flex-1 pr-2">
           <p className="text-xs font-bold text-slate-400 mb-3 tracking-wider">DOMPET REGULER</p>
           <div className="flex flex-col gap-3">
+            {/* Opsi Semua Dompet */}
+            <div 
+              onClick={() => onSelectWallet("all")}
+              className={`flex items-center justify-between p-4 rounded-2xl transition-colors cursor-pointer border ${activeWalletId === "all" ? "bg-primary/5 border-primary/30 shadow-[0_2px_10px_rgba(15,154,149,0.1)]" : "bg-slate-50 hover:bg-slate-100 border-transparent"}`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full flex-shrink-0 bg-primary/20 flex items-center justify-center">
+                  <span className="text-xl font-bold text-primary">Σ</span>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-slate-800 font-bold text-lg">Semua Dompet</h3>
+                  <p className="text-slate-500 font-medium text-xs">Total keseluruhan</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-slate-400">
+                <button className="hover:text-emerald-500 transition-colors cursor-pointer">
+                  <CheckCircle size={22} className={activeWalletId === "all" ? "text-emerald-500" : ""} />
+                </button>
+              </div>
+            </div>
             {wallets.map((wallet) => (
               <div 
                 key={wallet.id} 

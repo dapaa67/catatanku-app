@@ -9,12 +9,18 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1))
   const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()))
+  const walletIdParam = searchParams.get("walletId")
 
   const from = new Date(year, month - 1, 1)
   const to = new Date(year, month, 0, 23, 59, 59)
 
+  const walletQuery: any = { userId: user.id }
+  if (walletIdParam && walletIdParam !== 'all') {
+    walletQuery.id = walletIdParam
+  }
+
   const wallets = await prisma.wallet.findMany({
-    where: { userId: user.id }
+    where: walletQuery
   })
   const walletIds = wallets.map(w => w.id)
   const totalBalance = wallets.reduce((sum, w) => sum + Number(w.balance), 0)
