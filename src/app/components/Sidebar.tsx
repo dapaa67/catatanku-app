@@ -65,7 +65,7 @@ export default function Sidebar() {
   return (
     // 1. Ganti bg-white jadi bg-primary (Warna Teal Figma lo)
     // 2. Ganti border-r jadi border-white/10 biar gak kontras banget
-    <aside className="flex flex-col w-64 min-h-screen bg-primary text-white px-4 py-6">
+    <aside className="sticky top-0 h-screen overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 py-6">
 
       {/* Logo: Pake warna putih biar kelihatan di background teal */}
       <div className="flex items-center gap-2 px-2 mb-10">
