@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight } from "lucide-react";
+import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight, Zap } from "lucide-react";
 
 const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Tempat Tinggal", "Kesehatan", "Hiburan", "Lain-lain"];
 const INCOME_CATEGORIES = ["Pendapatan", "Investasi", "Lain-lain"];
@@ -313,21 +313,30 @@ export default function TambahTransaksiPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-20">
-      {/* Standard Header Panel */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm mb-2 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
-          <div className="text-slate-800">
-            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Catat Cepat</h1>
-            <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
-              Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
-            </p>
+      {/* Header Panel */}
+      <div className="relative rounded-3xl p-8 flex flex-col items-center justify-center text-white shadow-md mb-2">
+        {/* Background & abstract shapes wrapper (with overflow-hidden) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark rounded-3xl overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <div className="bg-white/20 p-3 rounded-2xl mb-4 backdrop-blur-sm border border-white/30 shadow-inner">
+            <Zap className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">
+            Catat Cepat
+          </h1>
+          <p className="text-sm text-white/90 max-w-md text-center leading-relaxed mb-6">
+            Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
+          </p>
           
           {/* Wallet Dropdown */}
-          <div className="relative shrink-0 z-20 md:min-w-[240px]">
+          <div className="relative z-20 w-full max-w-xs">
             <button 
               onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
-              className="bg-white text-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 font-semibold text-sm w-full border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
+              className="bg-white text-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 font-semibold text-sm w-full shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div 
                 className="w-4 h-4 rounded-full shadow-inner border border-slate-200" 
@@ -340,7 +349,7 @@ export default function TambahTransaksiPage() {
             </button>
 
             {isWalletDropdownOpen && wallets.length > 0 && (
-              <div className="absolute top-full right-0 mt-2 w-full bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xl py-2 transform origin-top transition-all animate-in fade-in zoom-in-95">
+              <div className="absolute top-full right-0 mt-2 w-full bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-xl py-2 transform origin-top transition-all animate-in fade-in zoom-in-95 text-slate-800">
                 {wallets.map((wallet) => (
                   <button
                     key={wallet.id}
