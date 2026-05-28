@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight } from "lucide-react";
 
-const EXPENSE_CATEGORIES = ["Makanan", "Belanja", "Transport", "Tagihan", "Rumah", "Kesehatan", "Hiburan", "Lainnya"];
-const INCOME_CATEGORIES = ["Gaji", "Investasi", "Bonus", "Lainnya"];
+const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Tempat Tinggal", "Kesehatan", "Hiburan", "Lain-lain"];
+const INCOME_CATEGORIES = ["Pendapatan", "Investasi", "Lain-lain"];
 
 type Wallet = {
   id: string;
@@ -22,6 +22,9 @@ type DraftTransaction = {
   date: string;
   time: string;
   isLoading: boolean; // true while AI is predicting
+  originalInput: string;
+  originalCategory: string | null;
+  isCategoryCorrect: boolean | null;
 };
 
 export default function TambahTransaksiPage() {
@@ -41,10 +44,33 @@ export default function TambahTransaksiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isClient, setIsClient] = useState(false);
+
   // Initialize and fetch wallets
   useEffect(() => {
+    setIsClient(true);
+    
+    // Auto-restore drafts dari local storage supaya tidak hilang
+    const savedDrafts = localStorage.getItem("catatanku_manual_drafts");
+    const savedInput = localStorage.getItem("catatanku_manual_input");
+    
+    if (savedDrafts) {
+      try { setDrafts(JSON.parse(savedDrafts)); } catch (e) {}
+    }
+    if (savedInput) {
+      setNaturalInput(savedInput);
+    }
+
     fetchWallets();
   }, []);
+
+  // Auto-save ke local storage setiap kali ada perubahan
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem("catatanku_manual_drafts", JSON.stringify(drafts));
+      localStorage.setItem("catatanku_manual_input", naturalInput);
+    }
+  }, [drafts, naturalInput, isClient]);
 
   const fetchWallets = async () => {
     try {
@@ -113,7 +139,10 @@ export default function TambahTransaksiPage() {
         category: "Lainnya", // default
         date: currentDate,
         time: currentTime,
-        isLoading: true
+        isLoading: true,
+        originalInput: part,
+        originalCategory: null,
+        isCategoryCorrect: null
       };
     });
 
@@ -134,8 +163,29 @@ export default function TambahTransaksiPage() {
           if (res.ok) {
             const data = await res.json();
             if (data.hasil && data.hasil.length > 0) {
-              const predictedKategori = data.hasil[0].kategori;
-              const isIncome = INCOME_CATEGORIES.includes(predictedKategori);
+              let predictedKategori = data.hasil[0].kategori;
+              
+              // Heuristic override for obvious income keywords
+              const lowerName = draft.name.toLowerCase();
+              const incomeKeywords = ["gaji", "arisan", "dapat", "terima", "bonus", "cair", "profit", "dividen", "jual", "refund"];
+              let hasIncomeKeyword = incomeKeywords.some(kw => lowerName.includes(kw));
+              
+              // Smart heuristic for "utang" / "hutang"
+              // "rusdi bayar utang" -> Pemasukan (someone paying us)
+              // "bayar utang ke rusdi" -> Pengeluaran (we are paying)
+              if (lowerName.includes("bayar utang") || lowerName.includes("bayar hutang")) {
+                if (!lowerName.trim().startsWith("bayar")) {
+                  hasIncomeKeyword = true;
+                }
+              }
+              
+              let isIncome = hasIncomeKeyword || INCOME_CATEGORIES.includes(predictedKategori);
+              
+              if (hasIncomeKeyword && !INCOME_CATEGORIES.includes(predictedKategori)) {
+                // If it's obviously an income but AI said expense, override to Pendapatan
+                predictedKategori = "Pendapatan";
+                isIncome = true;
+              }
               
               setDrafts(current => current.map(d => {
                 if (d.id === draft.id) {
@@ -143,7 +193,8 @@ export default function TambahTransaksiPage() {
                     ...d,
                     category: predictedKategori,
                     type: isIncome ? "pemasukan" : "pengeluaran",
-                    isLoading: false
+                    isLoading: false,
+                    originalCategory: predictedKategori
                   };
                 }
                 return d;
@@ -222,7 +273,15 @@ export default function TambahTransaksiPage() {
           category: draft.category,
           description: draft.name, 
           note: draft.name,
-          date: new Date(combinedDateTimeString).toISOString()
+          date: new Date(combinedDateTimeString).toISOString(),
+          ...(draft.originalCategory && {
+            aiTrainingData: {
+              inputText: draft.originalInput,
+              guessedCategory: draft.originalCategory,
+              correctCategory: draft.category,
+              isCorrect: draft.category === draft.originalCategory
+            }
+          })
         };
 
         const res = await fetch("/api/transactions", {
@@ -237,7 +296,12 @@ export default function TambahTransaksiPage() {
         }
       }
 
-      // Success, redirect to dashboard
+      // Success, clear storage and redirect
+      setDrafts([]);
+      setNaturalInput("");
+      localStorage.removeItem("catatanku_manual_drafts");
+      localStorage.removeItem("catatanku_manual_input");
+      
       router.push("/dashboard");
       router.refresh();
       
@@ -249,33 +313,21 @@ export default function TambahTransaksiPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-20">
-      {/* Premium Header Panel */}
-      <div className="relative rounded-3xl bg-gradient-to-r from-primary to-teal-400 p-8 shadow-[0_8px_30px_rgba(15,154,149,0.2)] mb-2 group transition-all duration-500 hover:shadow-[0_8px_40px_rgba(15,154,149,0.3)]">
-        {/* Decorative subtle background elements */}
-        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl transition-transform duration-700 group-hover:scale-110"></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-200 opacity-20 rounded-full blur-2xl transition-transform duration-700 group-hover:scale-110"></div>
-        </div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-md">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <span className="font-semibold text-teal-50 tracking-wider text-xs uppercase">Smart Input AI</span>
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight mb-2">Catat Cepat</h1>
-            <p className="text-teal-50 text-sm max-w-sm leading-relaxed opacity-90">
-              Ketik transaksimu sekaligus pisahkan dengan koma. AI akan memilahnya otomatis.
+      {/* Standard Header Panel */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm mb-2 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 w-full">
+          <div className="text-slate-800">
+            <h1 className="text-2xl font-extrabold tracking-tight mb-2">Catat Cepat</h1>
+            <p className="text-slate-500 text-sm max-w-sm leading-relaxed">
+              Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
             </p>
           </div>
           
-          {/* Wallet Dropdown with glass effect */}
+          {/* Wallet Dropdown */}
           <div className="relative shrink-0 z-20 md:min-w-[240px]">
             <button 
               onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
-              className="bg-white text-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 font-semibold text-sm w-full hover:bg-slate-50 transition-colors shadow-[0_4px_15px_rgba(0,0,0,0.1)] cursor-pointer"
+              className="bg-white text-slate-800 px-5 py-3 rounded-2xl flex items-center gap-3 font-semibold text-sm w-full border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm cursor-pointer"
             >
               <div 
                 className="w-4 h-4 rounded-full shadow-inner border border-slate-200" 
@@ -328,15 +380,11 @@ export default function TambahTransaksiPage() {
           ></textarea>
           
           <div className="absolute bottom-3 left-4 right-3 flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline-block bg-white/50 px-3 py-1.5 rounded-lg border border-slate-200/50">
-              Tekan <kbd className="font-mono bg-slate-200 px-1 rounded text-slate-500">Enter</kbd> untuk memproses
-            </span>
             <button
               onClick={handleParseInput}
               disabled={isParsing || !naturalInput.trim()}
               className="ml-auto px-6 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:scale-100 disabled:shadow-none shadow-lg shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
             >
-              {isParsing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               <span>Proses Sekarang</span>
             </button>
           </div>
@@ -376,42 +424,41 @@ export default function TambahTransaksiPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Left: Tipe & Name & Amount */}
-                  <div className="flex-1 flex flex-col gap-4">
-                    {/* Top Row: Type & Delete */}
-                    <div className="flex justify-between items-center">
-                      <div className="flex bg-slate-100 rounded-lg p-1">
-                        <button
-                          onClick={() => updateDraft(draft.id, 'type', 'pemasukan')}
-                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                            draft.type === 'pemasukan' ? 'bg-white text-[#0f9a95] shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                          }`}
-                        >
-                          Pemasukan
-                        </button>
-                        <button
-                          onClick={() => updateDraft(draft.id, 'type', 'pengeluaran')}
-                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                            draft.type === 'pengeluaran' ? 'bg-white text-red-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                          }`}
-                        >
-                          Pengeluaran
-                        </button>
-                      </div>
-                      
-                      <button 
-                        onClick={() => removeDraft(draft.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                <div className="flex flex-col gap-4">
+                  {/* Top Row: Type & Delete */}
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <div className="flex bg-slate-100 rounded-lg p-1">
+                      <button
+                        onClick={() => updateDraft(draft.id, 'type', 'pemasukan')}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                          draft.type === 'pemasukan' ? 'bg-white text-[#0f9a95] shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        Pemasukan
+                      </button>
+                      <button
+                        onClick={() => updateDraft(draft.id, 'type', 'pengeluaran')}
+                        className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                          draft.type === 'pengeluaran' ? 'bg-white text-red-500 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Pengeluaran
                       </button>
                     </div>
+                    
+                    <button 
+                      onClick={() => removeDraft(draft.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
-                    {/* Inputs */}
-                    <div className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Left Column: Name & Amount */}
+                    <div className="flex-1 flex flex-col gap-3">
                       <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Nama / Catatan</label>
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Catatan</label>
                         <input
                           type="text"
                           value={draft.name}
@@ -426,7 +473,7 @@ export default function TambahTransaksiPage() {
                           <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold ${draft.type === 'pemasukan' ? 'text-[#0f9a95]' : 'text-red-500'}`}>Rp</span>
                           <input
                             type="text"
-                            value={draft.amount || ''}
+                            value={draft.amount ? draft.amount.toLocaleString('id-ID') : ''}
                             onChange={(e) => {
                               const val = e.target.value.replace(/\D/g, "");
                               updateDraft(draft.id, 'amount', val ? parseInt(val, 10) : 0);
@@ -436,43 +483,54 @@ export default function TambahTransaksiPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Right: Category, Date, Time */}
-                  <div className="flex-1 flex flex-col gap-3">
-                     <div>
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Kategori</label>
-                        <select
-                          value={draft.category}
-                          onChange={(e) => updateDraft(draft.id, 'category', e.target.value)}
-                          className="w-full mt-1 bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-4 py-2.5 text-sm text-slate-900 font-medium outline-none transition-colors appearance-none"
-                        >
-                          {(draft.type === 'pemasukan' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </div>
+                    {/* Right Column: Category, Date, Time */}
+                    <div className="flex-1 flex flex-col gap-3">
+                       <div>
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Kategori</label>
+                          
+                          {/* Input Kategori dengan Datalist (Combobox) */}
+                          <div className="relative mt-1">
+                            <input
+                              type="text"
+                              list={`categories-${draft.id}`}
+                              value={draft.category}
+                              onChange={(e) => updateDraft(draft.id, 'category', e.target.value)}
+                              placeholder="Ketik kategori baru..."
+                              className="w-full bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-4 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
+                            />
+                            <datalist id={`categories-${draft.id}`}>
+                              {(() => {
+                                const options = draft.type === 'pemasukan' ? [...INCOME_CATEGORIES] : [...EXPENSE_CATEGORIES];
+                                return options.map(cat => (
+                                  <option key={cat} value={cat} />
+                                ));
+                              })()}
+                            </datalist>
+                          </div>
+                        </div>
 
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Tanggal</label>
-                          <input
-                            type="date"
-                            value={draft.date}
-                            onChange={(e) => updateDraft(draft.id, 'date', e.target.value)}
-                            className="w-full mt-1 bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-3 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
-                          />
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Tanggal</label>
+                            <input
+                              type="date"
+                              value={draft.date}
+                              onChange={(e) => updateDraft(draft.id, 'date', e.target.value)}
+                              className="w-full mt-1 bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-3 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Waktu</label>
+                            <input
+                              type="time"
+                              value={draft.time}
+                              onChange={(e) => updateDraft(draft.id, 'time', e.target.value)}
+                              className="w-full mt-1 bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-3 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
+                            />
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Waktu</label>
-                          <input
-                            type="time"
-                            value={draft.time}
-                            onChange={(e) => updateDraft(draft.id, 'time', e.target.value)}
-                            className="w-full mt-1 bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-3 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
-                          />
-                        </div>
-                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -481,7 +539,7 @@ export default function TambahTransaksiPage() {
 
           {/* Floating Premium Pill Action */}
           <div className="fixed bottom-6 left-0 right-0 sm:left-64 flex justify-center z-40 pointer-events-none px-4">
-            <div className="bg-white/90 backdrop-blur-xl border border-slate-200/50 p-2 rounded-full shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex items-center gap-4 pointer-events-auto transform transition-all hover:-translate-y-1 w-full max-w-md mx-auto sm:w-auto">
+            <div className="bg-white/90 backdrop-blur-xl border border-slate-200/50 p-3 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex items-center justify-between gap-6 pointer-events-auto transform transition-all hover:-translate-y-1 w-full max-w-xl mx-auto">
               <div className="px-4 hidden sm:block">
                 <span className="text-sm font-semibold text-slate-600">
                   <strong className="text-primary mr-1">{drafts.length}</strong> 
@@ -491,7 +549,7 @@ export default function TambahTransaksiPage() {
               <button 
                 onClick={handleSubmitAll}
                 disabled={isSubmitting || drafts.some(d => d.isLoading)}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:flex-1 bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                 <span>Simpan Semua</span>

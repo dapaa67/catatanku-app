@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 })
 
   const body = await req.json()
-  const { walletId, type, amount, description, category, date, note, photoUrl } = body
+  const { walletId, type, amount, description, category, date, note, photoUrl, aiTrainingData } = body
 
   if (!walletId || !type || !amount || !description || !category)
     return NextResponse.json({ error: "Data transaksi tidak lengkap" }, { status: 400 })
@@ -74,7 +74,17 @@ export async function POST(req: NextRequest) {
           [type === "INCOME" ? "increment" : "decrement"]: amount
         }
       }
-    })
+    }),
+    ...(aiTrainingData ? [
+      prisma.aiTrainingData.create({
+        data: {
+          inputText: aiTrainingData.inputText,
+          guessedCategory: aiTrainingData.guessedCategory,
+          correctCategory: aiTrainingData.correctCategory,
+          isCorrect: aiTrainingData.isCorrect
+        }
+      })
+    ] : [])
   ])
 
   return NextResponse.json({
