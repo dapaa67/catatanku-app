@@ -46,6 +46,15 @@ export async function POST(
     })
   ])
 
+  // TODO (Backend):
+  // ====== PREDIKSI AI ======
+  // 1. Ambil 6 transaksi terakhir secara kronologis.
+  // 2. Olah jadi array `riwayat` (isinya: target_nominal, nominal_nabung, total_terkumpul, jarak_hari_nabung).
+  // 3. Tembak array tersebut ke API FastAPI lo via POST request.
+  // 4. Tangkap balikan `estimasi_kali_nabung` dari AI-nya, lalu pake angkanya buat UPDATE kolom `deadline` di tabel SavingsGoal.
+  // 5. Jangan lupa siapin fallback manual kalau server AI lagi down/error.
+  // 6. Selipin juga angka `estimasi_kali_nabung` ke dalam object JSON response di bawah ini, biar Frontend bisa trigger Modal Sukses.
+
   return NextResponse.json({
     data: transaction,
     message: isAchieved ? "Selamat! Target tabungan tercapai" : "Deposit berhasil ditambahkan"

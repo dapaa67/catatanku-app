@@ -92,3 +92,83 @@ export async function POST(req: NextRequest) {
     message: "Transaksi berhasil ditambahkan"
   }, { status: 201 })
 }
+
+export async function DELETE(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 })
+
+  try {
+    const body = await req.json()
+    const { transactionIds } = body
+
+    if (!transactionIds || !Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return NextResponse.json({ error: "Tidak ada transaksi yang dipilih untuk dihapus" }, { status: 400 })
+    }
+
+    // Ambil detail transaksi untuk mengembalikan saldo
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        id: { in: transactionIds },
+        wallet: { userId: user.id } // Pastikan transaksi milik user yang login
+      },
+      select: { id: true, amount: true, type: true, walletId: true }
+    })
+
+    if (transactions.length === 0) {
+      return NextResponse.json({ error: "Transaksi tidak ditemukan atau tidak ada akses" }, { status: 404 })
+    }
+
+    // Kalkulasi perubahan saldo per wallet
+    const walletBalanceUpdates: Record<string, number> = {}
+    
+    for (const t of transactions) {
+      if (!walletBalanceUpdates[t.walletId]) {
+        walletBalanceUpdates[t.walletId] = 0
+      }
+      
+      // Jika yang dihapus INCOME, saldo harus berkurang. Jika EXPENSE, saldo harus bertambah.
+      if (t.type === "INCOME") {
+        walletBalanceUpdates[t.walletId] -= Number(t.amount)
+      } else {
+        walletBalanceUpdates[t.walletId] += Number(t.amount)
+      }
+    }
+
+    // Siapkan array promise untuk prisma.$transaction
+    const prismaOperations = []
+
+    // 1. Update saldo semua wallet yang terdampak
+    for (const [walletId, amountChange] of Object.entries(walletBalanceUpdates)) {
+      prismaOperations.push(
+        prisma.wallet.update({
+          where: { id: walletId },
+          data: {
+            balance: {
+              increment: amountChange // Bisa negatif atau positif
+            }
+          }
+        })
+      )
+    }
+
+    // 2. Hapus transaksinya
+    const idsToDelete = transactions.map(t => t.id)
+    prismaOperations.push(
+      prisma.transaction.deleteMany({
+        where: { id: { in: idsToDelete } }
+      })
+    )
+
+    // Eksekusi semua secara atomik
+    await prisma.$transaction(prismaOperations)
+
+    return NextResponse.json({
+      message: `Berhasil menghapus ${idsToDelete.length} transaksi`,
+      deletedIds: idsToDelete
+    })
+
+  } catch (error: any) {
+    console.error("Bulk Delete Error:", error)
+    return NextResponse.json({ error: "Gagal menghapus transaksi" }, { status: 500 })
+  }
+}

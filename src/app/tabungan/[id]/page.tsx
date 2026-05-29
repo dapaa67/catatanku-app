@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import TopUpModal from "../components/TopUpModal";
@@ -39,8 +39,8 @@ export default function TabunganDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const fetchDetail = useCallback(async () => {
-    setIsLoading(true);
+  const fetchDetail = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const res = await fetch(`/api/savings/${id}`);
       if (res.ok) {
@@ -50,12 +50,12 @@ export default function TabunganDetailPage() {
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
-    if (id) fetchDetail();
+    if (id) fetchDetail(false);
   }, [fetchDetail, id]);
 
   const handleDelete = async () => {
@@ -95,21 +95,17 @@ export default function TabunganDetailPage() {
 
   let dynamicDaysLeft = 0;
   let dynamicDeadlineStr = goal.deadline;
+  let dynamicTimesLeft = 0;
 
-  if (!isAchieved && goal.planAmount && Number(goal.planAmount) > 0 && goal.remainingAmount > 0) {
+  if (!isAchieved && goal.deadline) {
+    const timeDiff = new Date(goal.deadline).getTime() - new Date().getTime();
+    dynamicDaysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    if (dynamicDaysLeft < 0) dynamicDaysLeft = 0;
+
     let daysPerPlan = 1;
     if (goal.planType === "MINGGUAN") daysPerPlan = 7;
     if (goal.planType === "BULANAN") daysPerPlan = 30;
-    
-    dynamicDaysLeft = Math.ceil((goal.remainingAmount / Number(goal.planAmount)) * daysPerPlan);
-    
-    const d = new Date();
-    d.setDate(d.getDate() + dynamicDaysLeft);
-    dynamicDeadlineStr = d.toISOString();
-  } else if (goal.remainingAmount <= 0) {
-    dynamicDaysLeft = 0;
-  } else {
-    dynamicDaysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24)) : 0;
+    dynamicTimesLeft = Math.ceil(dynamicDaysLeft / daysPerPlan);
   }
 
   return (
@@ -167,11 +163,16 @@ export default function TabunganDetailPage() {
               <span className="text-sm font-bold text-slate-800">{new Date(goal.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-xs font-medium text-slate-500">Estimasi</span>
+              <span className="text-xs font-bold text-primary flex items-center gap-1 mb-0.5">
+                Prediksi
+              </span>
               {isAchieved ? (
                 <span className="text-sm font-bold text-green-500">Tercapai 🎉</span>
               ) : (
-                <span className="text-sm font-bold text-slate-800">{dynamicDeadlineStr ? new Date(dynamicDeadlineStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'} {dynamicDaysLeft > 0 && `(${dynamicDaysLeft} hari)`}</span>
+                <div className="flex flex-col items-center">
+                  <span className="text-sm font-bold text-slate-800">{dynamicTimesLeft > 0 ? `${dynamicTimesLeft}x nabung lagi` : '-'}</span>
+                  <span className="text-[10px] text-slate-500">{dynamicDeadlineStr ? new Date(dynamicDeadlineStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''} {dynamicDaysLeft > 0 && `(${dynamicDaysLeft} hari)`}</span>
+                </div>
               )}
             </div>
             <div className="flex flex-col items-end">
@@ -192,11 +193,17 @@ export default function TabunganDetailPage() {
           <span className="text-sm font-bold text-slate-800 mb-2">Kekurangan</span>
           <h2 className="text-2xl font-bold text-red-500">{formatRupiah(kekuranganDisplay)}</h2>
         </div>
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-2">Sisa Waktu</span>
-          <h2 className="text-2xl font-bold text-slate-800">
-            {isAchieved ? <span className="text-green-500">Selesai</span> : (dynamicDaysLeft > 0 ? `${dynamicDaysLeft} hari` : '-')}
+        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full"></div>
+          <span className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5 relative z-10">
+            Estimasi
+          </span>
+          <h2 className="text-2xl font-bold text-slate-800 relative z-10">
+            {isAchieved ? <span className="text-green-500">Selesai</span> : (dynamicTimesLeft > 0 ? `${dynamicTimesLeft}x Setor` : '-')}
           </h2>
+          {!isAchieved && dynamicDaysLeft > 0 && (
+            <span className="text-sm text-slate-500 relative z-10 mt-1 font-medium">Atau sekitar {dynamicDaysLeft} hari</span>
+          )}
         </div>
       </div>
 
@@ -238,7 +245,7 @@ export default function TabunganDetailPage() {
         isOpen={isTopUpOpen}
         onClose={() => setIsTopUpOpen(false)}
         onSuccess={() => {
-          fetchDetail();
+          fetchDetail(true);
           // Optionally show a toast here
         }}
         goalId={id}

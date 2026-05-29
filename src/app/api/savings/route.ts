@@ -28,22 +28,47 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 })
 
   const body = await req.json()
-  const { name, targetAmount, deadline, planType, planAmount, photoUrl } = body
+  const { name, targetAmount, deadline, planType, planAmount, photoUrl, initialDeposit } = body
 
   if (!name || !targetAmount)
     return NextResponse.json({ error: "Nama dan target tabungan wajib diisi" }, { status: 400 })
 
-  const goal = await prisma.savingsGoal.create({
-    data: {
-      userId: user.id,
-      name,
-      targetAmount,
-      deadline: deadline ? new Date(deadline) : null,
-      planType: planType ?? null,
-      planAmount: planAmount ?? null,
-      photoUrl: photoUrl ?? null,
-    }
-  })
+  try {
+    const goal = await prisma.savingsGoal.create({
+      data: {
+        userId: user.id,
+        name,
+        targetAmount,
+        deadline: deadline ? new Date(deadline) : null,
+        planType: planType ?? null,
+        planAmount: planAmount ?? null,
+        photoUrl: photoUrl ?? null,
+      }
+    })
 
-  return NextResponse.json({ data: goal, message: "Tabungan berhasil dibuat" }, { status: 201 })
+    // TODO (Backend):
+    // Pas bikin tabungan baru, tolong hitung manual estimasi_kali_nabung = targetAmount / planAmount.
+    // Hasil hitungannya diselipin ke dalam JSON response balikan (sebagai estimasi_kali_nabung)
+    // biar Frontend bisa nampilin datanya.
+
+    if (initialDeposit && Number(initialDeposit) > 0) {
+      await prisma.savingsTransaction.create({
+        data: {
+          goalId: goal.id,
+          userId: user.id,
+          amount: initialDeposit,
+          note: "Setoran Awal",
+          date: new Date()
+        }
+      })
+    }
+
+    return NextResponse.json({
+      data: goal,
+      message: "Tabungan berhasil dibuat"
+    }, { status: 201 })
+  } catch (error: any) {
+    console.error("Error creating savings goal:", error)
+    return NextResponse.json({ error: "Gagal membuat tabungan" }, { status: 500 })
+  }
 }

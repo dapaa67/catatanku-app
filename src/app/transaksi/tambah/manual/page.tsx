@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight, Zap } from "lucide-react";
+import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight, Zap, HelpCircle } from "lucide-react";
 
 const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Tempat Tinggal", "Kesehatan", "Hiburan", "Lain-lain"];
 const INCOME_CATEGORIES = ["Pendapatan", "Investasi", "Lain-lain"];
@@ -45,6 +45,7 @@ export default function TambahTransaksiPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [isClient, setIsClient] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Initialize and fetch wallets
   useEffect(() => {
@@ -241,7 +242,7 @@ export default function TambahTransaksiPage() {
     setDrafts(prev => prev.filter(draft => draft.id !== id));
   };
 
-  const handleSubmitAll = async () => {
+  const handleSubmitAll = () => {
     if (!selectedWallet) {
       setError("Silakan pilih dompet terlebih dahulu");
       return;
@@ -259,6 +260,16 @@ export default function TambahTransaksiPage() {
     }
     
     setError(null);
+    setShowConfirmModal(true);
+  };
+
+  const executeSubmitAll = async () => {
+    if (!selectedWallet) {
+      setError("Silakan pilih dompet terlebih dahulu.");
+      return;
+    }
+    
+    setShowConfirmModal(false);
     setIsSubmitting(true);
     
     try {
@@ -562,6 +573,35 @@ export default function TambahTransaksiPage() {
               >
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                 <span>Simpan Semua</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-xl relative animate-in zoom-in-95 duration-200">
+            <HelpCircle className="w-24 h-24 text-primary mx-auto mb-6" strokeWidth={1.5} />
+            
+            <h3 className="text-xl font-bold text-center text-slate-800 mb-3">Konfirmasi Kategori</h3>
+            <p className="text-sm text-center text-slate-500 mb-8 leading-relaxed">
+              Apakah kategori yang ditebak AI sudah benar semua? Pastikan kembali agar AI kita bisa belajar dari koreksi Anda.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={executeSubmitAll}
+                className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-md text-sm"
+              >
+                Ya, Sudah Benar (Simpan)
+              </button>
+              <button 
+                onClick={() => setShowConfirmModal(false)}
+                className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-sm"
+              >
+                Belum, Cek Lagi
               </button>
             </div>
           </div>

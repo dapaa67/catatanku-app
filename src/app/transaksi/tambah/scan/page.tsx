@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, Image as ImageIcon, Receipt, UploadCloud, ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
+import { Camera, Image as ImageIcon, Receipt, UploadCloud, ShieldCheck, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 
 // Helper to generate UUID
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -11,6 +11,7 @@ export default function ScanStrukPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -35,6 +36,7 @@ export default function ScanStrukPage() {
   const processImage = async (file: File) => {
     setIsProcessing(true);
     setProgress(0);
+    setError(null);
     
     try {
       // 1. Convert image to base64
@@ -82,7 +84,7 @@ export default function ScanStrukPage() {
         category: "Belanja",
         type: "pengeluaran" as const,
         amount: item.amount,
-        name: `${storeName} - ${item.name}`,
+        name: item.name,
         date: dateStr,
         time: timeStr,
         isLoading: false,
@@ -127,7 +129,7 @@ export default function ScanStrukPage() {
       
     } catch (err) {
       console.error("Gagal OCR:", err);
-      alert("Gagal membaca struk. Pastikan foto jelas dan terang.");
+      setError("Gagal membaca struk. Pastikan foto jelas dan terang atau coba foto lain.");
     } finally {
       setIsProcessing(false);
     }
@@ -280,6 +282,27 @@ export default function ScanStrukPage() {
         </div>
 
       </div>
+
+      {/* Error Modal */}
+      {error && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-xl relative animate-in zoom-in-95 duration-200 text-center">
+            <AlertCircle className="w-24 h-24 text-red-500 mx-auto mb-6" strokeWidth={1.5} />
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-3">Oops, Scan Gagal!</h3>
+            <p className="text-sm text-slate-500 mb-8 leading-relaxed">
+              {error}
+            </p>
+            
+            <button 
+              onClick={() => setError(null)}
+              className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition-colors text-sm cursor-pointer"
+            >
+              Tutup & Coba Lagi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

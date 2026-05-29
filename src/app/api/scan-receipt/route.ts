@@ -37,7 +37,7 @@ export async function POST(req: Request) {
                 properties: {
                   name: {
                     type: SchemaType.STRING,
-                    description: "Nama barang lengkap dengan detail jumlah/satuan (contoh: PIATTOS SAPI PNG 68G 2 11200)"
+                    description: "Nama barang bersih yang diformat rapi (Title Case), tambahkan (xJumlah) jika lebih dari 1 (contoh: Piattos Sapi Panggang 68g (x2))"
                   },
                   amount: {
                     type: SchemaType.NUMBER,
@@ -55,11 +55,12 @@ export async function POST(req: Request) {
 
     const prompt = `Anda adalah ahli ekstraksi data struk belanja.
 Tugas Anda:
-1. Temukan nama toko/merchant yang valid.
-2. Ekstrak daftar barang belanjaan yang dibeli (hanya barang, abaikan baris alamat, nama kasir, nomor struk, pajak, kembalian, diskon, subtotal, atau total).
-3. Untuk setiap barang, gabungkan nama barang dengan kuantitas dan harga satuan jika ada ke dalam string 'name'.
-4. Masukkan harga total barang tersebut (bukan harga satuan) ke dalam 'amount' sebagai angka.
-5. Abaikan item yang sangat murah di bawah Rp 500 (seperti kantong plastik).`;
+1. Temukan nama toko/merchant yang valid (Format rapi/Title Case).
+2. Ekstrak daftar barang belanjaan yang dibeli (abaikan baris alamat, kasir, pajak, kembalian, subtotal, diskon).
+3. Bersihkan nama barang menjadi huruf Title Case yang enak dibaca (contoh: "PIATTOS SAPI PNG 68G" menjadi "Piattos Sapi Panggang 68g").
+4. JANGAN masukkan harga satuan ke dalam nama barang. JIKA kuantitas lebih dari 1, tambahkan di belakang nama (contoh: " (x2)").
+5. Masukkan harga total barang tersebut ke dalam 'amount' sebagai angka.
+6. Abaikan item yang sangat murah di bawah Rp 500 (seperti kantong plastik).`;
 
     const result = await model.generateContent([
       prompt,

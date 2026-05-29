@@ -92,20 +92,11 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
     setIsEstimasiLoading(true);
     
     try {
-      const res = await fetch("https://yobby15-catatanku-fastapi.hf.space/api/predict/tabungan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          terkumpul: 0,
-          target: target,
-          nabung: plan
-        })
-      });
+      // Untuk tabungan baru, estimasi dihitung secara manual karena belum ada histori
+      const estimasiKaliNabung = Math.ceil(target / plan);
       
-      if (!res.ok) throw new Error("Gagal mengambil prediksi AI");
-      const json = await res.json();
-      
-      const estimasiKaliNabung = json.estimasi_kali_nabung || 1;
+      // Simulasi delay kecil agar UI terasa alami
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       let daysPerPlan = 1;
       if (rencana === "Mingguan") daysPerPlan = 7;
