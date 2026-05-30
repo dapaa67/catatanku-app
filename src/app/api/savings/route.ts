@@ -17,7 +17,11 @@ export async function GET() {
     progressPercent: Number(g.targetAmount) > 0
       ? Math.round((Number(g.currentAmount) / Number(g.targetAmount)) * 100)
       : 0,
-    remainingAmount: Number(g.targetAmount) - Number(g.currentAmount)
+    remainingAmount: Number(g.targetAmount) - Number(g.currentAmount),
+    // Estimasi sisa kali nabung berdasarkan saldo sekarang
+    estimasiKaliNabung: g.planAmount && Number(g.planAmount) > 0
+      ? Math.ceil((Number(g.targetAmount) - Number(g.currentAmount)) / Number(g.planAmount))
+      : null
   }))
 
   return NextResponse.json({ data, message: "Berhasil mengambil data tabungan" })
@@ -34,11 +38,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Nama dan target tabungan wajib diisi" }, { status: 400 })
 
   try {
+    const hasInitialDeposit = initialDeposit && Number(initialDeposit) > 0
+
+    // Buat goal, kalau ada initialDeposit langsung update currentAmount sekalian
     const goal = await prisma.savingsGoal.create({
       data: {
         userId: user.id,
         name,
         targetAmount,
+        currentAmount: hasInitialDeposit ? Number(initialDeposit) : 0,
         deadline: deadline ? new Date(deadline) : null,
         planType: planType ?? null,
         planAmount: planAmount ?? null,
@@ -46,12 +54,7 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    // TODO (Backend):
-    // Pas bikin tabungan baru, tolong hitung manual estimasi_kali_nabung = targetAmount / planAmount.
-    // Hasil hitungannya diselipin ke dalam JSON response balikan (sebagai estimasi_kali_nabung)
-    // biar Frontend bisa nampilin datanya.
-
-    if (initialDeposit && Number(initialDeposit) > 0) {
+    if (hasInitialDeposit) {
       await prisma.savingsTransaction.create({
         data: {
           goalId: goal.id,
@@ -63,11 +66,22 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Hitung estimasi kali nabung dari awal (pakai currentAmount yang sudah include initialDeposit)
+    const currentAmount = hasInitialDeposit ? Number(initialDeposit) : 0
+    const estimasiKaliNabung = planAmount && Number(planAmount) > 0
+      ? Math.ceil((Number(targetAmount) - currentAmount) / Number(planAmount))
+      : null
+
     return NextResponse.json({
-      data: goal,
+      data: {
+        ...goal,
+        currentAmount,
+        estimasiKaliNabung
+      },
       message: "Tabungan berhasil dibuat"
     }, { status: 201 })
-  } catch (error: any) {
+
+  } catch (error: unknown) {
     console.error("Error creating savings goal:", error)
     return NextResponse.json({ error: "Gagal membuat tabungan" }, { status: 500 })
   }

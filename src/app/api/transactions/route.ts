@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 })
 
   const body = await req.json()
-  const { walletId, type, amount, description, category, date, note, photoUrl, aiTrainingData } = body
+  const { walletId, type, amount, description, category, date, note, photoUrl } = body
 
   if (!walletId || !type || !amount || !description || !category)
     return NextResponse.json({ error: "Data transaksi tidak lengkap" }, { status: 400 })
@@ -74,17 +74,7 @@ export async function POST(req: NextRequest) {
           [type === "INCOME" ? "increment" : "decrement"]: amount
         }
       }
-    }),
-    ...(aiTrainingData ? [
-      prisma.aiTrainingData.create({
-        data: {
-          inputText: aiTrainingData.inputText,
-          guessedCategory: aiTrainingData.guessedCategory,
-          correctCategory: aiTrainingData.correctCategory,
-          isCorrect: aiTrainingData.isCorrect
-        }
-      })
-    ] : [])
+    })
   ])
 
   return NextResponse.json({
@@ -105,11 +95,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Tidak ada transaksi yang dipilih untuk dihapus" }, { status: 400 })
     }
 
-    // Ambil detail transaksi untuk mengembalikan saldo
     const transactions = await prisma.transaction.findMany({
       where: {
         id: { in: transactionIds },
-        wallet: { userId: user.id } // Pastikan transaksi milik user yang login
+        wallet: { userId: user.id }
       },
       select: { id: true, amount: true, type: true, walletId: true }
     })
@@ -118,15 +107,12 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Transaksi tidak ditemukan atau tidak ada akses" }, { status: 404 })
     }
 
-    // Kalkulasi perubahan saldo per wallet
     const walletBalanceUpdates: Record<string, number> = {}
-    
+
     for (const t of transactions) {
       if (!walletBalanceUpdates[t.walletId]) {
         walletBalanceUpdates[t.walletId] = 0
       }
-      
-      // Jika yang dihapus INCOME, saldo harus berkurang. Jika EXPENSE, saldo harus bertambah.
       if (t.type === "INCOME") {
         walletBalanceUpdates[t.walletId] -= Number(t.amount)
       } else {
@@ -134,24 +120,17 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    // Siapkan array promise untuk prisma.$transaction
     const prismaOperations = []
 
-    // 1. Update saldo semua wallet yang terdampak
     for (const [walletId, amountChange] of Object.entries(walletBalanceUpdates)) {
       prismaOperations.push(
         prisma.wallet.update({
           where: { id: walletId },
-          data: {
-            balance: {
-              increment: amountChange // Bisa negatif atau positif
-            }
-          }
+          data: { balance: { increment: amountChange } }
         })
       )
     }
 
-    // 2. Hapus transaksinya
     const idsToDelete = transactions.map(t => t.id)
     prismaOperations.push(
       prisma.transaction.deleteMany({
@@ -159,7 +138,6 @@ export async function DELETE(req: NextRequest) {
       })
     )
 
-    // Eksekusi semua secara atomik
     await prisma.$transaction(prismaOperations)
 
     return NextResponse.json({
@@ -167,7 +145,7 @@ export async function DELETE(req: NextRequest) {
       deletedIds: idsToDelete
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Bulk Delete Error:", error)
     return NextResponse.json({ error: "Gagal menghapus transaksi" }, { status: 500 })
   }

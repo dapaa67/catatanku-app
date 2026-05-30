@@ -208,18 +208,3 @@ model SavingsTransaction {
   @@map("savings_transactions")
 }
 
-// ============================================================
-// TABEL 7: ai_training_data (Data Latih AI)
-// Menyimpan input user dan kategori benar/salah untuk active learning
-// ============================================================
-
-model AiTrainingData {
-  id              String   @id @default(uuid())
-  inputText       String   @map("input_text")      // Contoh: "Beli nasi padang 20rb"
-  guessedCategory String   @map("guessed_category")// Contoh: "Transportasi"
-  correctCategory String   @map("correct_category")// Contoh: "Makanan & Minuman"
-  isCorrect       Boolean  @map("is_correct")      // True jika tebakan AI sudah benar
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  @@map("ai_training_data")
-}
