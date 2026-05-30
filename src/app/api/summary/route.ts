@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const from = new Date(year, month - 1, 1)
   const to = new Date(year, month, 0, 23, 59, 59)
 
-  const walletQuery: any = { userId: user.id }
+  const walletQuery: { userId: string; id?: string } = { userId: user.id }
   if (walletIdParam && walletIdParam !== 'all') {
     walletQuery.id = walletIdParam
   }
