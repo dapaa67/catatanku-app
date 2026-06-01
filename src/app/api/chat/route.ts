@@ -37,15 +37,15 @@ export async function POST(req: NextRequest) {
     // Format data keuangan menjadi string yang bisa dibaca AI
     const totalSaldo = wallets.reduce((acc: number, w: any) => acc + Number(w.balance), 0);
     
-    const walletContext = wallets.map(w => 
+    const walletContext = wallets.map((w: any) => 
       `- ${w.name}: Rp ${Number(w.balance).toLocaleString("id-ID")}`
     ).join('\n');
 
-    const txContext = transactions.map(t => 
+    const txContext = transactions.map((t: any) => 
       `- ${new Date(t.date).toLocaleDateString("id-ID")}: ${t.type === 'INCOME' ? '+' : '-'}${Number(t.amount).toLocaleString("id-ID")} (${t.category}) - ${t.description}`
     ).join('\n');
 
-    const savingContext = savings.map(s => {
+    const savingContext = savings.map((s: any) => {
       const targetStr = `Terkumpul Rp ${Number(s.currentAmount).toLocaleString("id-ID")} dari target Rp ${Number(s.targetAmount).toLocaleString("id-ID")}`;
       const planStr = s.planType ? `Rencana: ${s.planType} (Rp ${Number(s.planAmount).toLocaleString("id-ID")})` : '';
       const deadlineStr = s.deadline ? `Target Selesai: ${new Date(s.deadline).toLocaleDateString("id-ID")}` : '';
