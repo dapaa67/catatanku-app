@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     ]);
 
     // Format data keuangan menjadi string yang bisa dibaca AI
-    const totalSaldo = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
+    const totalSaldo = wallets.reduce((acc: number, w: any) => acc + Number(w.balance), 0);
     
     const walletContext = wallets.map(w => 
       `- ${w.name}: Rp ${Number(w.balance).toLocaleString("id-ID")}`
