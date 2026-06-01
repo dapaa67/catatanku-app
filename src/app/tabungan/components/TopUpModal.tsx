@@ -53,12 +53,14 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, goalId, default
         })
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menyimpan deposit");
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Gagal menyimpan deposit");
 
-      if (data.estimasi_kali_nabung !== null && data.estimasi_kali_nabung > 0) {
-        setPredictionResult(data.estimasi_kali_nabung);
-        setSuccessMessage(data.message || "Berhasil disetor!");
+      const prediction = json.data?.estimasiKaliNabung;
+
+      if (prediction !== null && prediction !== undefined && prediction > 0) {
+        setPredictionResult(prediction);
+        setSuccessMessage(json.message || "Berhasil disetor!");
         if (onSuccess) onSuccess();
         // Do not close immediately, wait for user to click OK on prediction view
       } else {

@@ -86,3 +86,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Gagal membuat tabungan" }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 })
+
+  try {
+    const body = await req.json()
+    const { goalIds } = body
+
+    if (!goalIds || !Array.isArray(goalIds) || goalIds.length === 0) {
+      return NextResponse.json({ error: "ID Tabungan tidak valid" }, { status: 400 })
+    }
+
+    // Verify ownership
+    const goals = await prisma.savingsGoal.findMany({
+      where: { id: { in: goalIds }, userId: user.id }
+    })
+
+    const validGoalIds = goals.map(g => g.id)
+
+    if (validGoalIds.length === 0) {
+      return NextResponse.json({ error: "Tidak ada tabungan yang valid untuk dihapus" }, { status: 403 })
+    }
+
+    await prisma.savingsTransaction.deleteMany({
+      where: { goalId: { in: validGoalIds } }
+    })
+
+    await prisma.savingsGoal.deleteMany({
+      where: { id: { in: validGoalIds } }
+    })
+
+    return NextResponse.json({ message: "Berhasil menghapus tabungan yang dipilih" })
+  } catch (error: unknown) {
+    console.error("Bulk delete savings error:", error)
+    return NextResponse.json({ error: "Gagal menghapus tabungan massal" }, { status: 500 })
+  }
+}

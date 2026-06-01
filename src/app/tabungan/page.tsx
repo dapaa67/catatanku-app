@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ChevronDown, AlignLeft, TrendingUp, Plus } from "lucide-react";
+import { ChevronDown, AlignLeft, TrendingUp, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import TambahTabunganModal from "./components/TambahTabunganModal";
 
@@ -26,6 +26,11 @@ export default function TabunganPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"name" | "progress">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Bulk delete states
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   const fetchTabungan = useCallback(async () => {
     setIsLoading(true);
@@ -66,6 +71,42 @@ export default function TabunganPage() {
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const confirmBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteModal(true);
+  };
+
+  const executeDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/savings", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goalIds: selectedIds })
+      });
+      
+      if (res.ok) {
+        setSelectedIds([]);
+        fetchTabungan();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Gagal menghapus tabungan");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan saat menghapus");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModal(false);
+    }
   };
 
   return (
@@ -121,24 +162,61 @@ export default function TabunganPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        <button 
-          onClick={() => setSortBy(sortBy === "name" ? "progress" : "name")}
-          className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          <AlignLeft className="w-4 h-4 text-slate-500" />
-          <span>{sortBy === "name" ? "Berdasarkan Nama" : "Berdasarkan Progress"}</span>
-          <ChevronDown className="w-4 h-4 text-slate-400" />
-        </button>
-        <button 
-          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-          className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          <TrendingUp className={`w-4 h-4 text-slate-500 transition-transform ${sortOrder === "desc" ? "rotate-180" : ""}`} />
-          <span>{sortOrder === "asc" ? "Meningkat" : "Menurun"}</span>
-          <ChevronDown className="w-4 h-4 text-slate-400" />
-        </button>
+      {/* Filters & Bulk Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="flex flex-wrap gap-4">
+          <button 
+            onClick={() => setSortBy(sortBy === "name" ? "progress" : "name")}
+            className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <AlignLeft className="w-4 h-4 text-slate-500" />
+            <span>{sortBy === "name" ? "Berdasarkan Nama" : "Berdasarkan Progress"}</span>
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          </button>
+          <button 
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <TrendingUp className={`w-4 h-4 text-slate-500 transition-transform ${sortOrder === "desc" ? "rotate-180" : ""}`} />
+            <span>{sortOrder === "asc" ? "Meningkat" : "Menurun"}</span>
+            <ChevronDown className="w-4 h-4 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Bulk Action Controls */}
+        <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm">
+          <div 
+            onClick={() => {
+              if (selectedIds.length === sortedTabungan.length && sortedTabungan.length > 0) {
+                setSelectedIds([]);
+              } else {
+                setSelectedIds(sortedTabungan.map(t => t.id));
+              }
+            }}
+            className={`w-5 h-5 rounded-md flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+              selectedIds.length === sortedTabungan.length && sortedTabungan.length > 0
+                ? 'bg-[#00a859]' 
+                : 'border-2 border-slate-300 hover:border-slate-400'
+            }`}
+          >
+            {selectedIds.length > 0 && (
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+          <span className="font-bold text-slate-800 text-sm">
+            {selectedIds.length > 0 ? `${selectedIds.length} Dipilih` : "Pilih Semua"}
+          </span>
+          {selectedIds.length > 0 && (
+            <button 
+              onClick={confirmBulkDelete}
+              className="text-red-500 font-bold text-sm hover:text-red-600 transition-colors cursor-pointer ml-2 border-l border-slate-200 pl-4"
+            >
+              Hapus
+            </button>
+          )}
+        </div>
       </div>
 
       {/* List */}
@@ -147,7 +225,27 @@ export default function TabunganPage() {
           <div className="flex justify-center p-8"><span className="text-slate-500">Memuat tabungan...</span></div>
         ) : sortedTabungan.length > 0 ? (
           sortedTabungan.map((item) => (
-            <Link href={`/tabungan/${item.id}`} key={item.id} className="bg-white border border-primary/30 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row gap-6 relative hover:shadow-md transition-shadow cursor-pointer">
+            <Link href={`/tabungan/${item.id}`} key={item.id} className={`bg-white border rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row items-center gap-6 relative hover:shadow-md transition-all cursor-pointer ${selectedIds.includes(item.id) ? 'border-primary/50 ring-2 ring-primary/20' : 'border-primary/30'}`}>
+              
+              {/* Checkbox */}
+              <div 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleSelection(item.id);
+                }}
+                className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 cursor-pointer transition-colors ${
+                  selectedIds.includes(item.id) 
+                    ? 'bg-[#00a859] border-none' 
+                    : 'border-2 border-slate-300 hover:border-slate-400 bg-white'
+                }`}
+              >
+                {selectedIds.includes(item.id) && (
+                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
               
               {/* Absolute % text */}
               <div className="absolute top-6 right-6 font-bold text-slate-800 text-sm">
@@ -209,6 +307,43 @@ export default function TabunganPage() {
           fetchTabungan();
         }}
       />
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-center mx-auto mb-6">
+              <Trash2 className="w-16 h-16 text-red-500" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-800 text-center mb-2">Hapus Tabungan</h3>
+            <p className="text-slate-500 text-center text-sm mb-8">
+              Apakah Anda yakin ingin menghapus {selectedIds.length} tabungan terpilih? Data tidak dapat dikembalikan.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal(false)}
+                disabled={isDeleting}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={isDeleting}
+                className="flex-1 py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <span>Hapus</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

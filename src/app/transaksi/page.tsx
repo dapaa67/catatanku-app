@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { Search, ChevronDown, Pencil, Trash2, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ApiWallet {
@@ -373,14 +373,23 @@ export default function RiwayatTransaksiPage() {
                   </span>
                 </div>
 
-                {selectedIds.length > 0 && (
-                  <button 
-                    onClick={confirmBulkDelete}
-                    className="text-[#00a859] font-bold text-sm hover:text-green-700 transition-colors cursor-pointer"
+                <div className="flex items-center gap-4">
+                  <a
+                    href="/api/export/transactions"
+                    download="transaksi-catatanku.csv"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-primary rounded-xl text-xs font-bold transition-colors shadow-sm"
                   >
-                    Hapus
-                  </button>
-                )}
+                    <Download className="w-3.5 h-3.5" /> Download Riwayat
+                  </a>
+                  {selectedIds.length > 0 && (
+                    <button 
+                      onClick={confirmBulkDelete}
+                      className="text-[#00a859] font-bold text-sm hover:text-green-700 transition-colors cursor-pointer"
+                    >
+                      Hapus
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="overflow-y-auto pr-3 h-full" style={{ scrollbarWidth: 'thin' }}>

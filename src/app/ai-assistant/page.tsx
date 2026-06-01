@@ -100,7 +100,7 @@ export default function AIAssistantPage() {
         role: "assistant",
         content: isServerError
           ? "Maaf, server AI sedang sibuk. Coba lagi dalam beberapa saat ya! 🙏"
-          : rawReply,
+          : rawReply.replace(/\*\*/g, "").replace(/^\* /gm, "- "),
       }]);
     } catch {
       setMessages(prev => [...prev, {
@@ -256,19 +256,21 @@ export default function AIAssistantPage() {
       {/* ── INPUT BAR (Gemini pill) ── */}
       <div className="shrink-0 bg-slate-50 px-4 pt-2 pb-6">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 bg-white rounded-full px-5 py-3.5 border border-slate-200 shadow-md focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+          <div className="flex items-end gap-3 bg-white rounded-3xl px-5 py-3 border border-slate-200 shadow-md focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
             
             {/* Input */}
-            <input
-              ref={inputRef as any}
-              type="text"
+            <textarea
+              ref={inputRef}
+              rows={1}
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") { e.preventDefault(); handleSend(); }
+              onChange={e => {
+                setInput(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
+              onKeyDown={handleKeyDown}
               placeholder={isEmpty ? "Tanya AI CatatanKu..." : "Lanjut bertanya..."}
-              className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none font-medium"
+              className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none font-medium resize-none overflow-y-auto py-1.5 min-h-[32px] max-h-[120px]"
             />
 
             {/* Send button */}

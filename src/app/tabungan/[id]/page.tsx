@@ -22,7 +22,6 @@ interface ApiSavingGoalDetail {
   planType?: string | null;
   planAmount?: string | null;
   photoUrl?: string | null;
-  status: "BERLANGSUNG" | "TERCAPAI";
   progressPercent: number;
   remainingAmount: number;
   createdAt: string;
