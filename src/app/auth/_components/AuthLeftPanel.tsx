@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { NotebookPen } from "lucide-react";
+import { NotebookPen, Wallet, Coins, Receipt, ArrowUpRight } from "lucide-react";
 
 const slides = [
   {
@@ -56,15 +56,30 @@ export default function AuthLeftPanel() {
             </p>
           </div>
           
-          {/* Ilustrasi Hiasan Kanan */}
-          <div className="absolute right-0 bottom-4 w-[180px] h-[180px]">
-            <Image
-              src="/wallet-illustration.png"
-              alt="Ilustrasi dompet"
-              fill
-              className="object-contain object-right"
-              loading="eager"
-            />
+          {/* Ilustrasi Hiasan Kanan (CSS Art) */}
+          <div className="absolute -right-4 -bottom-4 w-[200px] h-[200px] flex items-center justify-center pointer-events-none">
+            {/* Background Blob */}
+            <div className="absolute w-[120px] h-[120px] bg-primary/20 rounded-full blur-2xl"></div>
+            
+            {/* Floating Receipt */}
+            <div className="absolute top-8 right-6 bg-white p-3 rounded-xl shadow-lg border border-slate-100 transform rotate-12 animate-[bounce_4s_ease-in-out_infinite]">
+              <Receipt className="w-8 h-8 text-primary/80" strokeWidth={1.5} />
+            </div>
+
+            {/* Floating Coins */}
+            <div className="absolute top-12 right-28 bg-[#f59e0b] p-2.5 rounded-full shadow-lg transform -rotate-12 animate-[bounce_3s_ease-in-out_infinite_0.5s]">
+              <Coins className="w-7 h-7 text-white" strokeWidth={2.5} />
+            </div>
+
+            {/* Main Wallet Icon */}
+            <div className="absolute bottom-6 right-10 bg-gradient-to-tr from-primary to-teal-400 p-4 rounded-[1.5rem] shadow-xl shadow-primary/40 transform -rotate-6">
+              <Wallet className="w-16 h-16 text-white" strokeWidth={1.5} />
+            </div>
+
+            {/* Small accent */}
+            <div className="absolute bottom-24 right-32 bg-green-500 p-2 rounded-full shadow-md animate-[pulse_2s_ease-in-out_infinite]">
+              <ArrowUpRight className="w-4 h-4 text-white" strokeWidth={3} />
+            </div>
           </div>
         </div>
 

@@ -140,9 +140,9 @@ export default function ScanStrukPage() {
       // Redirect ke halaman review draft
       router.push("/transaksi/tambah/manual");
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Gagal OCR:", err);
-      setError("Gagal membaca struk. Pastikan foto jelas dan terang atau coba foto lain.");
+      setError(`Gagal membaca struk: ${err.message || "Pastikan foto jelas atau coba foto lain."}`);
     } finally {
       setIsProcessing(false);
     }
