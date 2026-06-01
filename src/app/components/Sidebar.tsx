@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import {
-  LayoutDashboard,
+  Home,
   ArrowLeftRight,
   PieChart,
   Target,
@@ -14,13 +14,15 @@ import {
   LogOut, // Tambahin icon logout biar makin mirip figma
   ChevronDown,
   ChevronRight,
-  List
+  List,
+  Menu,
+  X
 } from "lucide-react";
 
 import { Plus } from "lucide-react"; // Import icon Plus yang dibutuhkan
 
 const navItems = [
-  { label: "Dashboard",        href: "/dashboard",        icon: LayoutDashboard },
+  { label: "Home",             href: "/dashboard",        icon: Home },
   { label: "Tambah Transaksi", href: "/transaksi/tambah", icon: Plus },
   { label: "Riwayat Transaksi",href: "/transaksi",        icon: List },
   { label: "Analisis",         href: "/analisis",         icon: PieChart        },
@@ -34,6 +36,12 @@ export default function Sidebar() {
   const router = useRouter();
   const [isTambahOpen, setIsTambahOpen] = useState(pathname.startsWith("/transaksi/tambah"));
   const [userProfile, setUserProfile] = useState<{name: string, email: string} | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Tutup menu mobile setiap kali route berubah
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -63,19 +71,49 @@ export default function Sidebar() {
   };
 
   return (
-    // 1. Ganti bg-white jadi bg-primary (Warna Teal Figma lo)
-    // 2. Ganti border-r jadi border-white/10 biar gak kontras banget
-    <aside className="sticky top-0 h-screen overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 py-6">
-
-      {/* Logo: Pake warna putih biar kelihatan di background teal */}
-      <div className="flex items-center gap-2 px-2 mb-10">
-        <div className="bg-white p-1.5 rounded-lg">
-           <NotebookPen className="text-primary w-6 h-6" />
-        </div>
-        <span className="text-xl font-bold italic">
-          CatatanKu
-        </span>
+    <>
+      {/* Mobile Top Header (Hanya muncul di HP) */}
+      <div className="lg:hidden flex items-center justify-between bg-primary p-4 text-white sticky top-0 z-40 shadow-sm w-full">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <div className="bg-white p-1.5 rounded-lg">
+            <NotebookPen className="text-primary w-5 h-5" />
+          </div>
+          <span className="text-lg font-bold italic">CatatanKu</span>
+        </Link>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Toggle Menu"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
+
+      {/* Overlay background saat drawer terbuka di hp */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Utama */}
+      <aside className={`
+        fixed lg:sticky top-0 left-0 h-screen overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 py-6 z-50 transition-transform duration-300 ease-in-out flex-shrink-0
+        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}>
+        
+        {/* Header Logo (Desktop) & Close Button (Mobile) */}
+        <div className="flex items-center justify-between px-2 mb-10">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <div className="bg-white p-1.5 rounded-lg">
+               <NotebookPen className="text-primary w-6 h-6" />
+            </div>
+            <span className="text-xl font-bold italic">
+              CatatanKu
+            </span>
+          </Link>
+        </div>
 
       {/* Nav Items */}
       <nav className="flex flex-col gap-2 flex-1">
@@ -163,5 +201,6 @@ export default function Sidebar() {
       </div>
 
     </aside>
+    </>
   );
 }

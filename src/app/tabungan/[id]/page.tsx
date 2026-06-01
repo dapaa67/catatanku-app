@@ -95,6 +95,7 @@ export default function TabunganDetailPage() {
   let dynamicDaysLeft = 0;
   let dynamicDeadlineStr = goal.deadline;
   let dynamicTimesLeft = 0;
+  let planUnit = "hari";
 
   if (!isAchieved && goal.deadline) {
     const timeDiff = new Date(goal.deadline).getTime() - new Date().getTime();
@@ -102,8 +103,13 @@ export default function TabunganDetailPage() {
     if (dynamicDaysLeft < 0) dynamicDaysLeft = 0;
 
     let daysPerPlan = 1;
-    if (goal.planType === "MINGGUAN") daysPerPlan = 7;
-    if (goal.planType === "BULANAN") daysPerPlan = 30;
+    if (goal.planType === "MINGGUAN") {
+      daysPerPlan = 7;
+      planUnit = "minggu";
+    } else if (goal.planType === "BULANAN") {
+      daysPerPlan = 30;
+      planUnit = "bulan";
+    }
     dynamicTimesLeft = Math.ceil(dynamicDaysLeft / daysPerPlan);
   }
 
@@ -127,9 +133,9 @@ export default function TabunganDetailPage() {
       </div>
 
       {/* Main Info Card */}
-      <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row gap-8 mb-6">
+      <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 md:gap-8 mb-6">
         {/* Photo */}
-        <div className="w-full md:w-64 h-48 rounded-2xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
+        <div className="w-full md:w-64 h-48 md:h-auto rounded-2xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
           {goal.photoUrl ? (
             <img src={goal.photoUrl} alt={goal.name} className="w-full h-full object-cover" />
           ) : (
@@ -156,71 +162,76 @@ export default function TabunganDetailPage() {
             <div className="h-full bg-primary/80 rounded-full transition-all duration-500" style={{ width: `${progressCapped}%` }}></div>
           </div>
 
-          <div className="flex justify-between items-start">
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-slate-500">Dibuat</span>
-              <span className="text-sm font-bold text-slate-800">{new Date(goal.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <div className="flex justify-between items-start gap-2">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-[10px] md:text-xs font-medium text-slate-500">Dibuat</span>
+              <span className="text-xs md:text-sm font-bold text-slate-800 truncate">{new Date(goal.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-xs font-bold text-primary flex items-center gap-1 mb-0.5">
+            <div className="flex flex-col items-center min-w-0 flex-1">
+              <span className="text-[10px] md:text-xs font-bold text-primary flex items-center gap-1 mb-0.5">
                 Prediksi
               </span>
               {isAchieved ? (
-                <span className="text-sm font-bold text-green-500">Tercapai 🎉</span>
+                <span className="text-xs md:text-sm font-bold text-green-500">Tercapai 🎉</span>
               ) : (
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-slate-800">{dynamicTimesLeft > 0 ? `${dynamicTimesLeft}x nabung lagi` : '-'}</span>
-                  <span className="text-[10px] text-slate-500">{dynamicDeadlineStr ? new Date(dynamicDeadlineStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : ''} {dynamicDaysLeft > 0 && `(${dynamicDaysLeft} hari)`}</span>
+                <div className="flex flex-col items-center text-center">
+                  <span className="text-xs md:text-sm font-bold text-slate-800 truncate w-full">{dynamicDeadlineStr ? new Date(dynamicDeadlineStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}</span>
+                  <span className="text-[9px] md:text-xs text-slate-500 mt-0.5">{dynamicTimesLeft > 0 ? `${dynamicTimesLeft}x nabung lagi` : ''}</span>
                 </div>
               )}
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-medium text-slate-500">Kekurangan</span>
-              <span className="text-sm font-bold text-red-500">{formatRupiah(kekuranganDisplay)}</span>
+            <div className="flex flex-col items-end min-w-0 flex-1">
+              <span className="text-[10px] md:text-xs font-medium text-slate-500">Kekurangan</span>
+              <span className="text-xs md:text-sm font-bold text-red-500 truncate">{formatRupiah(kekuranganDisplay)}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* 3 Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-2">Total Terkumpul</span>
-          <h2 className="text-2xl font-bold text-green-500">{formatRupiah(Number(goal.currentAmount))}</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-8">
+        <div className="bg-white border border-primary/30 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm flex flex-col items-center justify-center text-center">
+          <span className="text-xs md:text-sm font-bold text-slate-800 mb-1 md:mb-2">Total Terkumpul</span>
+          <h2 className="text-lg md:text-2xl font-bold text-green-500 truncate w-full px-2">{formatRupiah(Number(goal.currentAmount))}</h2>
         </div>
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-2">Kekurangan</span>
-          <h2 className="text-2xl font-bold text-red-500">{formatRupiah(kekuranganDisplay)}</h2>
+        <div className="bg-white border border-primary/30 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm flex flex-col items-center justify-center text-center">
+          <span className="text-xs md:text-sm font-bold text-slate-800 mb-1 md:mb-2">Kekurangan</span>
+          <h2 className="text-lg md:text-2xl font-bold text-red-500 truncate w-full px-2">{formatRupiah(kekuranganDisplay)}</h2>
         </div>
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full"></div>
-          <span className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5 relative z-10">
+        <div className="col-span-2 md:col-span-1 bg-white border border-primary/30 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-primary/5 rounded-full pointer-events-none"></div>
+          <span className="text-xs md:text-sm font-bold text-slate-800 mb-1 md:mb-2 flex items-center gap-1.5 relative z-10">
             Estimasi
           </span>
-          <h2 className="text-2xl font-bold text-slate-800 relative z-10">
-            {isAchieved ? <span className="text-green-500">Selesai</span> : (dynamicTimesLeft > 0 ? `${dynamicTimesLeft}x Setor` : '-')}
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800 relative z-10 text-center">
+            {isAchieved ? <span className="text-green-500">Selesai</span> : (dynamicTimesLeft > 0 ? `Sekitar ${dynamicTimesLeft} ${planUnit}` : '-')}
           </h2>
-          {!isAchieved && dynamicDaysLeft > 0 && (
-            <span className="text-sm text-slate-500 relative z-10 mt-1 font-medium">Atau sekitar {dynamicDaysLeft} hari</span>
+          {!isAchieved && dynamicTimesLeft > 0 && (
+            <span className="text-xs md:text-sm text-slate-500 relative z-10 mt-1 font-medium">Atau {dynamicTimesLeft}x Setor</span>
           )}
         </div>
       </div>
 
       {/* Riwayat Pengisian */}
-      <div className="bg-white border border-primary/30 rounded-3xl p-8 shadow-sm">
-        <h3 className="font-bold text-slate-800 mb-6">Riwayat Pengisian</h3>
+      <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-8 shadow-sm mb-6 flex flex-col">
+        <div className="flex justify-between items-center mb-6 shrink-0">
+          <h3 className="font-bold text-slate-800">Riwayat Pengisian</h3>
+          <span className="text-xs font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full">
+            {goal.savingsTransactions.length} Transaksi
+          </span>
+        </div>
         
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4 sm:gap-6 overflow-y-auto max-h-[320px] pr-2">
           {goal.savingsTransactions.length > 0 ? (
-            goal.savingsTransactions.map((item, idx) => (
-              <div key={item.id} className={`flex justify-between items-center ${idx !== goal.savingsTransactions.length - 1 ? 'pb-6 border-b border-slate-100' : ''}`}>
-                <div className="flex flex-col gap-1">
-                  <span className="text-sm font-bold text-slate-800">{item.note || 'Pengisian Tabungan'}</span>
-                  <span className="text-xs font-medium text-slate-400">
+            goal.savingsTransactions.map((item, idx, arr) => (
+              <div key={item.id} className={`flex justify-between items-center ${idx !== arr.length - 1 ? 'pb-4 sm:pb-6 border-b border-slate-100' : ''}`}>
+                <div className="flex flex-col gap-1 pr-2">
+                  <span className="text-sm font-bold text-slate-800 leading-tight">{item.note || 'Pengisian Tabungan'}</span>
+                  <span className="text-[10px] sm:text-xs font-medium text-slate-400">
                     {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <span className={`text-sm font-bold ${Number(item.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                <span className={`text-sm sm:text-base font-bold shrink-0 ${Number(item.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
                   {Number(item.amount) < 0 ? '-' : '+'}{formatRupiah(Math.abs(Number(item.amount)))}
                 </span>
               </div>

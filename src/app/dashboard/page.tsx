@@ -7,6 +7,7 @@ import { AddWalletModal, NewWalletData } from "@/components/AddWalletModal";
 import { TransferBalanceModal } from "@/components/TransferBalanceModal";
 import Link from "next/link";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { Info } from "lucide-react";
 
 // ============================================================
 // Types sesuai response dari backend
@@ -79,27 +80,6 @@ export default function DashboardPage() {
   const [recentTransactions, setRecentTransactions] = useState<DashboardTransaction[]>([]);
   const [chartType, setChartType] = useState<"income" | "expense">("expense");
   const [userName, setUserName] = useState<string>("Loading...");
-  
-  const [currentDate, setCurrentDate] = useState<string>("");
-  const [greeting, setGreeting] = useState<string>("Halo");
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      setCurrentDate(now.toLocaleDateString('id-ID', options));
-
-      const hour = now.getHours();
-      if (hour < 11) setGreeting("Selamat Pagi");
-      else if (hour < 15) setGreeting("Selamat Siang");
-      else if (hour < 18) setGreeting("Selamat Sore");
-      else setGreeting("Selamat Malam");
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
   // ── Fetch wallets & summary dari API ──────────────────────
   const fetchData = useCallback(async () => {
@@ -222,11 +202,6 @@ export default function DashboardPage() {
   // ============================================================
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      {/* Header Dashboard */}
-      <div className="flex flex-col gap-1">
-        <p className="text-xs font-bold text-slate-500">{currentDate || "Memuat tanggal..."}</p>
-        <p className="text-sm font-bold text-slate-800">{greeting}, {userName}</p>
-      </div>
 
       {/* Error state */}
       {error && (
@@ -245,18 +220,24 @@ export default function DashboardPage() {
       <div>
         <p className="text-xs font-medium text-slate-500 mb-0.5">Jumlah Saldo</p>
         {isLoading ? (
-          <div className="h-6 w-32 bg-slate-200 animate-pulse rounded-xl" />
+          <div className="h-6 w-32 bg-slate-200 animate-pulse rounded-xl mt-1" />
         ) : (
-          <h2 className="text-xl font-bold text-slate-800">
-            {isBalanceHidden
-              ? "Rp ••••••••"
-              : new Intl.NumberFormat("id-ID", {
-                  style: "currency",
-                  currency: "IDR",
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                }).format(totalBalance)}
-          </h2>
+          <>
+            <h2 className="text-xl font-bold text-slate-800 leading-none mt-1">
+              {isBalanceHidden
+                ? "Rp ••••••••"
+                : new Intl.NumberFormat("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  }).format(totalBalance)}
+            </h2>
+            <div className="flex items-center gap-1 mt-1 text-slate-400">
+              <Info size={12} className="text-primary" />
+              <span className="text-[10px] font-medium">Total gabungan dari semua dompet</span>
+            </div>
+          </>
         )}
       </div>
 
@@ -404,12 +385,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-center gap-6 mt-2">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${chartType === "income" ? "bg-green-500" : "bg-red-500"}`}></div>
-                <span className="text-[10px] font-medium text-slate-500">Bulan ini</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                <span className="text-[10px] font-medium text-slate-500">Rata-rata 3 bulan sebelumnya</span>
-                <span className="w-3 h-3 rounded-full bg-slate-200 text-slate-500 text-[8px] flex items-center justify-center font-bold">?</span>
+                <span className="text-[10px] font-medium text-slate-500">Tren 6 Bulan Terakhir</span>
               </div>
             </div>
           </div>

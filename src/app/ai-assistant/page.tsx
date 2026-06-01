@@ -9,6 +9,74 @@ type Message = {
   content: string;
 };
 
+// Render teks AI jadi tampilan yang rapi & aesthetic
+function formatAIMessage(text: string) {
+  const paragraphs = text.split(/\n{2,}/);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {paragraphs.map((para, pi) => {
+        const lines = para.split("\n");
+        const isList = lines.every(l => l.trim().startsWith("-") || l.trim() === "");
+
+        if (isList) {
+          const items = lines.filter(l => l.trim().startsWith("-"));
+          return (
+            <ul key={pi} className="flex flex-col gap-1.5">
+              {items.map((item, ii) => {
+                const content = item.replace(/^-\s*/, "");
+                return (
+                  <li key={ii} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="text-slate-700 text-sm leading-relaxed">
+                      {highlightRupiah(content)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+
+        // Paragraf campur list & teks — render line by line
+        return (
+          <div key={pi} className="flex flex-col gap-1.5">
+            {lines.map((line, li) => {
+              if (line.trim() === "") return null;
+              if (line.trim().startsWith("-")) {
+                const content = line.replace(/^-\s*/, "");
+                return (
+                  <div key={li} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="text-slate-700 text-sm leading-relaxed">
+                      {highlightRupiah(content)}
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <p key={li} className="text-slate-700 text-sm leading-relaxed">
+                  {highlightRupiah(line)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Highlight angka Rupiah dengan warna hijau
+function highlightRupiah(text: string) {
+  const parts = text.split(/(Rp[\s]?[\d.,]+)/g);
+  return parts.map((part, i) =>
+    /^Rp/.test(part)
+      ? <span key={i} className="font-semibold text-emerald-600">{part}</span>
+      : part
+  );
+}
+
 const FASTAPI_BASE = "https://yobby15-catatanku-fastapi.hf.space";
 
 const SUGGESTION_PROMPTS = [
@@ -88,24 +156,31 @@ export default function AIAssistantPage() {
         body: JSON.stringify({ session_id: sessionId, message: messageToSend }),
       });
 
-      if (!res.ok) throw new Error();
-
       const data = await res.json();
+
+      if (!res.ok) {
+        // Kalau ada error field dari server, tampilkan pesannya langsung
+        throw new Error(data.error || "Terjadi kesalahan");
+      }
+
       const rawReply: string = data.reply || "";
+      // Hanya flag sebagai 'server sibuk' jika ada indikasi eksplisit 503 / UNAVAILABLE dari HuggingFace
       const isServerError =
         rawReply.includes("UNAVAILABLE") || rawReply.includes("503") ||
-        rawReply.includes("high demand") || (rawReply.includes("error") && rawReply.includes("code"));
+        rawReply.includes("high demand");
 
       setMessages(prev => [...prev, {
         role: "assistant",
         content: isServerError
-          ? "Maaf, server AI sedang sibuk. Coba lagi dalam beberapa saat ya! 🙏"
+          ? "Maaf, server AI lagi overload nih. Tunggu sebentar terus coba lagi ya! 🙏"
           : rawReply.replace(/\*\*/g, "").replace(/^\* /gm, "- "),
       }]);
-    } catch {
+    } catch (err: any) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Maaf, saya sedang tidak bisa menjawab. Silakan coba lagi.",
+        content: err?.message?.includes("login")
+          ? "Sesi kamu habis nih bro. Coba refresh halaman dulu ya!"
+          : "Aduh, koneksi ke AI-nya lagi gangguan. Coba lagi ya! 😅",
       }]);
     } finally {
       setIsLoading(false);
@@ -139,45 +214,46 @@ export default function AIAssistantPage() {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 relative">
+    <div className="w-full h-full flex flex-col md:items-center md:justify-center md:py-6">
+      <div className="flex flex-col w-full h-full md:max-w-4xl md:h-[calc(100vh-80px)] md:max-h-[850px] bg-slate-50 md:bg-white md:border md:border-slate-200 md:rounded-[2.5rem] md:shadow-sm relative overflow-hidden">
 
-      {/* ── RESET BUTTON (top right, only visible when chatting) ── */}
-      {!isEmpty && (
-        <div className="absolute top-4 right-6 z-10 animate-in fade-in duration-300">
-          <button
-            onClick={handleReset}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-primary transition-colors px-3 py-1.5 rounded-xl hover:bg-primary/5 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            Reset
-          </button>
-        </div>
-      )}
+        {/* ── RESET BUTTON (top right, only visible when chatting) ── */}
+        {!isEmpty && (
+          <div className="absolute top-4 right-4 md:right-6 z-10 animate-in fade-in duration-300">
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1.5 text-[10px] md:text-xs font-semibold text-slate-400 hover:text-primary transition-colors px-3 py-1.5 rounded-xl hover:bg-primary/5 cursor-pointer bg-white/80 backdrop-blur-sm shadow-sm md:shadow-none md:bg-transparent"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset
+            </button>
+          </div>
+        )}
 
-      {/* ── SCROLLABLE CHAT AREA ── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6 min-h-full">
+        {/* ── SCROLLABLE CHAT AREA ── */}
+        <div className="flex-1 overflow-y-auto w-full relative">
+          <div className={`max-w-3xl mx-auto px-4 sm:px-6 md:py-8 flex flex-col gap-6 min-h-full ${!isEmpty ? 'pt-16 pb-6' : 'py-6'}`}>
 
           {isEmpty ? (
             /* ── Welcome / Empty State ── */
-            <div className="flex flex-col items-center justify-center flex-1 min-h-[60vh] text-center">
-              <div className="bg-primary/10 p-5 rounded-3xl mb-6">
-                <Sparkles className="w-9 h-9 text-primary" />
+            <div className="flex flex-col items-center justify-center flex-1 min-h-[60vh] text-center mt-8 md:mt-0">
+              <div className="bg-primary/10 p-4 md:p-5 rounded-3xl mb-4 md:mb-6">
+                <Sparkles className="w-8 h-8 md:w-9 md:h-9 text-primary" />
               </div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              <h1 className="text-xl md:text-3xl font-bold text-slate-800 mb-2 px-4">
                 Halo {userName}, apa yang Anda pikirkan?
               </h1>
-              <p className="text-slate-500 text-sm mb-10 max-w-xs leading-relaxed">
+              <p className="text-slate-500 text-xs md:text-sm mb-8 md:mb-10 max-w-xs leading-relaxed px-4">
                 Tanyakan apapun tentang keuangan, tips menabung, atau strategi budgeting.
               </p>
 
               {/* Suggestion Chips */}
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-2 justify-center px-2">
                 {SUGGESTION_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    className="text-xs font-semibold px-4 py-2.5 rounded-full bg-white text-primary border border-primary/25 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm cursor-pointer"
+                    className="text-[10px] md:text-xs font-semibold px-4 py-2.5 rounded-full bg-white text-primary border border-primary/25 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm cursor-pointer"
                   >
                     {prompt}
                   </button>
@@ -198,7 +274,7 @@ export default function AIAssistantPage() {
                       </div>
                     </div>
                   ) : (
-                    /* AI response — left aligned, plain text */
+                    /* AI response — left aligned, formatted */
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
                         <div className="bg-primary/10 p-1.5 rounded-lg">
@@ -206,9 +282,9 @@ export default function AIAssistantPage() {
                         </div>
                         <span className="text-xs font-bold text-primary">AI CatatanKu</span>
                       </div>
-                      <p className="text-slate-700 text-sm leading-relaxed pl-1 whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
+                      <div className="pl-1">
+                        {formatAIMessage(msg.content)}
+                      </div>
                       {/* Action row */}
                       <div className="flex items-center gap-1 pl-1">
                         <button
@@ -254,9 +330,9 @@ export default function AIAssistantPage() {
       </div>
 
       {/* ── INPUT BAR (Gemini pill) ── */}
-      <div className="shrink-0 bg-slate-50 px-4 pt-2 pb-6">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-end gap-3 bg-white rounded-3xl px-5 py-3 border border-slate-200 shadow-md focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+      <div className="shrink-0 bg-slate-50 md:bg-white px-4 pt-2 pb-4 md:pb-6 border-t md:border-t-0 border-slate-200/50">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-end gap-2 md:gap-3 bg-white md:bg-slate-50 rounded-3xl px-4 md:px-5 py-2.5 md:py-3 border border-slate-200 md:border-transparent shadow-sm focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
             
             {/* Input */}
             <textarea
@@ -269,29 +345,30 @@ export default function AIAssistantPage() {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
               }}
               onKeyDown={handleKeyDown}
-              placeholder={isEmpty ? "Tanya AI CatatanKu..." : "Lanjut bertanya..."}
-              className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 outline-none font-medium resize-none overflow-y-auto py-1.5 min-h-[32px] max-h-[120px]"
+              placeholder={isEmpty ? "Tanya AI CatatanKu..." : "Ketik pesan..."}
+              className="flex-1 bg-transparent text-xs md:text-sm text-slate-700 placeholder:text-slate-400 outline-none font-medium resize-none overflow-y-auto py-1.5 md:py-2 min-h-[32px] max-h-[100px] md:max-h-[120px] scrollbar-hide"
             />
 
             {/* Send button */}
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}
-              className="shrink-0 w-8 h-8 bg-primary hover:bg-primary/90 disabled:bg-slate-100 text-white disabled:text-slate-300 rounded-full flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed"
+              className="shrink-0 w-8 h-8 md:w-9 md:h-9 bg-primary hover:bg-primary/90 disabled:bg-slate-200 text-white disabled:text-slate-400 rounded-full flex items-center justify-center transition-all cursor-pointer disabled:cursor-not-allowed mb-0.5"
             >
               {isLoading
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <Send className="w-3.5 h-3.5" />
+                ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                : <Send className="w-3.5 h-3.5 md:w-4 md:h-4 ml-0.5" />
               }
             </button>
 
           </div>
-          <p className="text-[10px] text-slate-400 text-center mt-2.5 font-medium">
+          <p className="text-[9px] md:text-[10px] text-slate-400 text-center mt-2 md:mt-3 font-medium px-4">
             AI dapat membuat kesalahan. Selalu verifikasi informasi keuangan penting.
           </p>
         </div>
       </div>
 
+    </div>
     </div>
   );
 }

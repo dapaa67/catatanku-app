@@ -53,11 +53,6 @@ export default function PengaturanPage() {
   const [isChangingPw, setIsChangingPw] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // --- Hapus Akun State ---
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [showDeleteSection, setShowDeleteSection] = useState(false);
-
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -141,26 +136,7 @@ export default function PengaturanPage() {
     }
   };
 
-  // ── Handler: Hapus Akun ──
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "HAPUS AKUN") return;
-    setIsDeletingAccount(true);
-    try {
-      const res = await fetch("/api/user/delete", { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Gagal menghapus akun");
-      }
-      // Logout & redirect
-      const supabase = createBrowserClient();
-      await supabase.auth.signOut();
-      router.push("/auth/login");
-    } catch (e: any) {
-      alert(e.message || "Terjadi kesalahan, coba lagi.");
-    } finally {
-      setIsDeletingAccount(false);
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -175,14 +151,14 @@ export default function PengaturanPage() {
   }
 
   return (
-    <div className="w-full pb-12 pr-4 lg:pr-8">
+    <div className="w-full pb-12 px-4 lg:pl-0 lg:pr-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-slate-800">Pengaturan</h1>
-        <p className="text-slate-500 font-medium">Kelola preferensi dan keamanan akun Anda</p>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-slate-800">Pengaturan</h1>
+        <p className="text-sm md:text-base text-slate-500 font-medium">Kelola preferensi dan keamanan akun Anda</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
         
         {/* Kolom Kiri: Navigasi / Info Singkat */}
         <div className="lg:col-span-1 flex flex-col gap-4 sticky top-6 self-start">
@@ -209,22 +185,16 @@ export default function PengaturanPage() {
               >
                 <Lock className="w-4 h-4"/> Keamanan
               </li>
-              <li 
-                onClick={() => document.getElementById("zona-bahaya-section")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                className="py-2 hover:text-red-500 flex items-center gap-2 text-slate-500 mt-2 border-t border-slate-200 pt-3 cursor-pointer transition-colors"
-              >
-                <ShieldAlert className="w-4 h-4"/> Zona Bahaya
-              </li>
             </ul>
           </div>
         </div>
 
         {/* Kolom Kanan: Form Pengaturan */}
-        <div className="lg:col-span-3 flex flex-col gap-8">
+        <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8">
           
           {/* ── SECTION 1: Profil ── */}
-          <div id="profil-section" className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm scroll-mt-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+          <div id="profil-section" className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm scroll-mt-6">
+            <h2 className="text-base md:text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
               <User className="w-5 h-5 text-primary" /> Profil Saya
             </h2>
 
@@ -278,8 +248,8 @@ export default function PengaturanPage() {
           </div>
 
           {/* ── SECTION 2: Keamanan ── */}
-          <div id="keamanan-section" className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm scroll-mt-6">
-            <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+          <div id="keamanan-section" className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm scroll-mt-6">
+            <h2 className="text-base md:text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
               <Lock className="w-5 h-5 text-primary" /> Keamanan Akun
             </h2>
 
@@ -334,73 +304,6 @@ export default function PengaturanPage() {
             </div>
           </div>
 
-          {/* ── SECTION 3: Zona Bahaya ── */}
-          <div id="zona-bahaya-section" className="bg-white border border-red-100 rounded-3xl p-6 md:p-8 shadow-sm scroll-mt-6">
-            <h2 className="text-lg font-bold text-red-600 mb-2 flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5" /> Zona Bahaya
-            </h2>
-            <p className="text-sm text-slate-500 mb-6 pb-4 border-b border-red-50">
-              Tindakan di area ini bersifat <span className="font-bold text-red-500">permanen dan tidak dapat dibatalkan</span>.
-            </p>
-
-            {!showDeleteSection ? (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Hapus Akun Permanen</h4>
-                  <p className="text-xs text-slate-500 mt-1">Semua data keuangan Anda akan dihapus.</p>
-                </div>
-                <button
-                  onClick={() => setShowDeleteSection(true)}
-                  className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 rounded-full font-bold transition-all text-sm cursor-pointer"
-                >
-                  <AlertTriangle className="w-4 h-4" /> Hapus Akun
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4 p-5 bg-red-50 border border-red-200 rounded-2xl animate-in fade-in duration-200">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-red-700 mb-1">Konfirmasi Hapus Akun</p>
-                    <p className="text-xs text-red-600 leading-relaxed">
-                      Semua data termasuk transaksi, dompet, dan tabungan akan dihapus secara permanen. Aksi ini <strong>tidak bisa dipulihkan</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-2">
-                  <label className="block text-xs font-bold text-slate-600 mb-2">
-                    Ketik <span className="font-mono bg-red-100 px-1.5 py-0.5 rounded text-red-700">HAPUS AKUN</span> di bawah ini:
-                  </label>
-                  <input
-                    type="text"
-                    value={deleteConfirmText}
-                    onChange={e => setDeleteConfirmText(e.target.value)}
-                    placeholder="HAPUS AKUN"
-                    className="w-full border border-red-200 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-red-400 bg-white"
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => { setShowDeleteSection(false); setDeleteConfirmText(""); }}
-                    className="flex-1 py-2.5 rounded-full border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={handleDeleteAccount}
-                    disabled={deleteConfirmText !== "HAPUS AKUN" || isDeletingAccount}
-                    className="flex-1 py-2.5 rounded-full bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    {isDeletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                    {isDeletingAccount ? "Menghapus..." : "Hapus Selamanya"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-          
         </div>
       </div>
     </div>

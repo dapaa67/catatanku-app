@@ -78,15 +78,15 @@ export default function AnalisisPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold mb-1 text-slate-800">Analisis Keuangan</h1>
-          <p className="text-sm font-medium text-slate-500">Ringkasan dan tren keuangan kamu</p>
+          <h1 className="text-xl md:text-2xl font-bold mb-1 text-slate-800">Analisis Keuangan</h1>
+          <p className="text-xs md:text-sm font-medium text-slate-500">Ringkasan dan tren keuangan kamu</p>
         </div>
         
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {/* Wallet Picker */}
-          <div className="relative z-20">
+          <div className="relative z-20 w-full sm:w-auto">
             <div 
-              className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none"
+              className="flex items-center justify-between sm:justify-start gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none w-full"
               onClick={() => {
                 setIsWalletPickerOpen(!isWalletPickerOpen);
                 setIsMonthPickerOpen(false);
@@ -128,9 +128,9 @@ export default function AnalisisPage() {
           </div>
 
           {/* Month Picker */}
-          <div className="relative z-10">
+          <div className="relative z-10 w-full sm:w-auto">
             <div 
-              className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none"
+              className="flex items-center justify-between sm:justify-start gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none w-full"
               onClick={() => {
                 setPickerYear(selectedDate.getFullYear());
                 setIsMonthPickerOpen(!isMonthPickerOpen);
@@ -226,8 +226,8 @@ export default function AnalisisPage() {
       </div>
 
       {/* Tren Keuangan Chart */}
-      <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm">
-        <div className="flex justify-between items-start mb-8">
+      <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h3 className="font-bold text-slate-800 mb-1">Tren Keuangan</h3>
             <p className="text-xs font-medium text-slate-500">Perbandingan pemasukan & pengeluaran 6 bulan terakhir</p>
@@ -245,7 +245,7 @@ export default function AnalisisPage() {
         </div>
 
         {/* Custom Bar Chart Layout */}
-        <div className="relative h-64 flex mt-4">
+        <div className="relative h-64 flex mt-4 mb-8">
           {(() => {
             const chartData = summary?.trendLast6Months || [];
             const maxVal = chartData.reduce((max, d) => Math.max(max, d.income, d.expense), 0) || 100;
@@ -309,9 +309,12 @@ export default function AnalisisPage() {
                   </div>
 
                   {/* X Axis */}
-                  <div className="absolute bottom-0 left-0 right-0 flex justify-around px-2 sm:px-6 transform translate-y-full pt-3 text-xs font-bold text-slate-500">
+                  <div className="absolute bottom-0 left-0 right-0 flex justify-around px-2 sm:px-6 transform translate-y-full pt-3 text-xs md:text-sm font-bold text-slate-500">
                     {chartData.map((data, idx) => (
-                      <span key={idx} className="text-center w-full max-w-[60px]">{data.month}</span>
+                      <span key={idx} className="text-center w-full max-w-[60px] truncate sm:overflow-visible">
+                        <span className="sm:hidden">{data.month.substring(0, 3)}</span>
+                        <span className="hidden sm:inline">{data.month}</span>
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -324,17 +327,17 @@ export default function AnalisisPage() {
       {/* Top Categories */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         {/* Pengeluaran */}
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-bold text-slate-800">Top 5 kategori Pengeluaran</h3>
-            <span className="text-xs font-bold bg-red-100 text-red-600 px-4 py-1.5 rounded-full">{monthName} {yearStr}</span>
+        <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8 border-b sm:border-0 border-slate-100 pb-4 sm:pb-0">
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top 5 Kategori Pengeluaran</h3>
+            <span className="text-[10px] md:text-xs font-bold bg-red-100 text-red-600 px-3 py-1 rounded-full">{monthName} {yearStr}</span>
           </div>
           <div className="flex flex-col gap-6">
             {summary?.topExpenseCategories?.map((item, idx) => (
               <div key={idx} className="flex flex-col gap-2">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-bold text-slate-700">{item.category}</span>
-                  <div className="flex items-center gap-6">
+                <div className="flex justify-between items-center text-xs md:text-sm">
+                  <span className="font-bold text-slate-700 truncate mr-2">{item.category}</span>
+                  <div className="flex items-center gap-3 md:gap-6 shrink-0">
                     <span className="font-bold text-slate-800">{formatRupiah(item.amount)}</span>
                     <span className="w-8 text-right font-bold text-slate-500">{item.percentage}%</span>
                   </div>
@@ -354,17 +357,17 @@ export default function AnalisisPage() {
         </div>
 
         {/* Pemasukan */}
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="font-bold text-slate-800">Top 5 kategori Pemasukan</h3>
-            <span className="text-xs font-bold bg-green-100 text-green-600 px-4 py-1.5 rounded-full">{monthName} {yearStr}</span>
+        <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8 border-b sm:border-0 border-slate-100 pb-4 sm:pb-0">
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top 5 Kategori Pemasukan</h3>
+            <span className="text-[10px] md:text-xs font-bold bg-green-100 text-green-600 px-3 py-1 rounded-full">{monthName} {yearStr}</span>
           </div>
           <div className="flex flex-col gap-6">
             {summary?.topIncomeCategories?.map((item, idx) => (
               <div key={idx} className="flex flex-col gap-2">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="font-bold text-slate-700">{item.category}</span>
-                  <div className="flex items-center gap-6">
+                <div className="flex justify-between items-center text-xs md:text-sm">
+                  <span className="font-bold text-slate-700 truncate mr-2">{item.category}</span>
+                  <div className="flex items-center gap-3 md:gap-6 shrink-0">
                     <span className="font-bold text-slate-800">{formatRupiah(item.amount)}</span>
                     <span className="w-8 text-right font-bold text-slate-500">{item.percentage}%</span>
                   </div>

@@ -33,15 +33,29 @@ export default function ScanStrukPage() {
     }
   };
 
+  // Helper: convert File to base64 string (browser-native, no Buffer needed)
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // result is "data:image/jpeg;base64,XXXXX" — we only want the base64 part
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const processImage = async (file: File) => {
     setIsProcessing(true);
     setProgress(0);
     setError(null);
     
     try {
-      // 1. Convert image to base64
-      const buffer = await file.arrayBuffer();
-      const base64Str = Buffer.from(buffer).toString('base64');
+      // 1. Convert image to base64 (browser-native, tanpa Buffer)
+      const base64Str = await fileToBase64(file);
       const mimeType = file.type;
 
       // 2. Call backend Gemini API
@@ -155,7 +169,7 @@ export default function ScanStrukPage() {
       />
 
       {/* Header Panel */}
-      <div className="rounded-3xl p-8 flex flex-col items-center justify-center text-white relative shadow-md bg-gradient-to-r from-primary to-primary-dark overflow-hidden">
+      <div className="rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-white relative shadow-md bg-gradient-to-r from-primary to-primary-dark overflow-hidden">
         {/* Abstract background shapes */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
@@ -164,10 +178,10 @@ export default function ScanStrukPage() {
           <div className="bg-white/20 p-3 rounded-2xl mb-4 backdrop-blur-sm border border-white/30 shadow-inner">
             <Camera className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold mb-2 flex items-center gap-2">
             AI Scan Struk 
           </h1>
-          <p className="text-sm text-white/90 max-w-md text-center leading-relaxed">
+          <p className="text-xs md:text-sm text-white/90 max-w-md text-center leading-relaxed px-4">
             Punya struk belanja? Foto aja! AI kami akan otomatis mendeteksi nama toko dan total belanjaanmu tanpa perlu ngetik manual.
           </p>
         </div>
@@ -177,11 +191,11 @@ export default function ScanStrukPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
         {/* Upload Area */}
-        <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col min-h-[400px]">
+        <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200 p-5 md:p-8 shadow-sm flex flex-col min-h-[350px] md:min-h-[400px]">
           <h2 className="text-sm font-semibold text-slate-800 mb-6 uppercase tracking-wider">Area Upload</h2>
           
           <div 
-            className={`flex-1 border-2 border-dashed rounded-3xl transition-colors flex flex-col items-center justify-center p-10 group relative overflow-hidden ${isProcessing ? 'border-primary bg-primary/5' : 'border-primary/30 bg-primary/5 hover:bg-primary/10 cursor-pointer'}`}
+            className={`flex-1 border-2 border-dashed rounded-3xl transition-colors flex flex-col items-center justify-center p-6 md:p-10 group relative overflow-hidden ${isProcessing ? 'border-primary bg-primary/5' : 'border-primary/30 bg-primary/5 hover:bg-primary/10 cursor-pointer'}`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => !isProcessing && fileInputRef.current?.click()}
@@ -197,29 +211,29 @@ export default function ScanStrukPage() {
               </div>
             ) : (
               <>
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-primary/20 mb-5 group-hover:scale-110 transition-transform duration-300">
-                  <UploadCloud className="w-10 h-10 text-primary" />
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center shadow-sm border border-primary/20 mb-5 group-hover:scale-110 transition-transform duration-300">
+                  <UploadCloud className="w-8 h-8 md:w-10 md:h-10 text-primary" />
                 </div>
                 
-                <h3 className="text-lg font-bold text-slate-800 mb-2">Tarik & Lepas Foto Di Sini</h3>
-                <p className="text-sm text-slate-500 text-center max-w-xs mb-8">
+                <h3 className="text-base md:text-lg font-bold text-slate-800 mb-2 text-center">Tarik & Lepas Foto Di Sini</h3>
+                <p className="text-xs md:text-sm text-slate-500 text-center max-w-xs mb-8">
                   Mendukung format JPG, PNG, atau ambil foto langsung dari kamera HP kamu
                 </p>
                 
-                <div className="flex flex-col sm:flex-row gap-4 w-full justify-center relative z-10" onClick={e => e.stopPropagation()}>
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full justify-center relative z-10" onClick={e => e.stopPropagation()}>
                   <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center justify-center gap-2 bg-white border-2 border-slate-200 text-slate-700 font-bold px-6 py-3.5 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
+                    className="flex items-center justify-center gap-2 bg-white border-2 border-slate-200 text-slate-700 font-bold px-4 py-3 md:px-6 md:py-3.5 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer text-sm md:text-base"
                   >
-                    <ImageIcon className="w-5 h-5 text-primary" />
+                    <ImageIcon className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                     <span>Pilih Galeri</span>
                   </button>
                   
                   <button 
                     onClick={() => cameraInputRef.current?.click()}
-                    className="flex items-center justify-center gap-2 bg-primary text-white font-bold px-6 py-3.5 rounded-full hover:bg-primary-dark transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer"
+                    className="flex items-center justify-center gap-2 bg-primary text-white font-bold px-4 py-3 md:px-6 md:py-3.5 rounded-full hover:bg-primary-dark transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 cursor-pointer text-sm md:text-base"
                   >
-                    <Camera className="w-5 h-5" />
+                    <Camera className="w-4 h-4 md:w-5 md:h-5" />
                     <span>Buka Kamera</span>
                   </button>
                 </div>
@@ -230,7 +244,7 @@ export default function ScanStrukPage() {
 
         {/* Tips Area */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+          <div className="bg-white rounded-3xl border border-slate-200 p-5 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
               <div className="bg-amber-100 p-2 rounded-xl text-amber-600">
                 <Receipt className="w-5 h-5" />

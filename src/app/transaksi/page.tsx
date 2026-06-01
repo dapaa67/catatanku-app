@@ -31,6 +31,9 @@ export default function RiwayatTransaksiPage() {
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Mobile filter toggle
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Bulk delete states
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -170,7 +173,7 @@ export default function RiwayatTransaksiPage() {
   const tabs = ["Semua", "Pemasukan", "Pengeluaran"];
 
   return (
-    <div className="w-full pr-4 lg:pr-8">
+    <div className="w-full">
       {/* Header Panel */}
       <div className="bg-primary rounded-[2rem] p-8 text-white mb-8 shadow-md relative z-30">
         {/* Abstract background shapes */}
@@ -180,9 +183,9 @@ export default function RiwayatTransaksiPage() {
         </div>
         
         <div className="relative z-10">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Riwayat Transaksi</h1>
-            <p className="text-sm md:text-base text-white/90">Ayo kelola transaksi kamu disini</p>
+          <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-xl md:text-3xl font-bold mb-2">Riwayat Transaksi</h1>
+            <p className="text-xs md:text-base text-white/90">Ayo kelola transaksi kamu disini</p>
           </div>
           
           <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
@@ -246,12 +249,23 @@ export default function RiwayatTransaksiPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
         
+        {/* Mobile Filter Toggle Button */}
+        <div className="lg:hidden w-full">
+          <button 
+            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+            className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-3 rounded-2xl shadow-sm flex items-center justify-between px-6 hover:bg-slate-50 transition-colors"
+          >
+            <span>{isMobileFilterOpen ? "Sembunyikan Filter" : "Tampilkan Filter"}</span>
+            <ChevronDown className={`w-5 h-5 transition-transform ${isMobileFilterOpen ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+
         {/* ── Kolom Kiri: Filters Sidebar ── */}
-        <div className="lg:col-span-1 flex flex-col gap-6 sticky top-6 self-start">
+        <div className={`lg:col-span-1 flex-col gap-6 sticky top-6 self-start ${isMobileFilterOpen ? "flex" : "hidden lg:flex"}`}>
           
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-sm">
             <h3 className="font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Filter Transaksi</h3>
             
             {/* Type Tabs (Vertical) */}
@@ -334,7 +348,7 @@ export default function RiwayatTransaksiPage() {
         </div>
 
         {/* ── Kolom Kanan: Transaction List ── */}
-        <div className="lg:col-span-3 flex flex-col gap-8 h-[calc(100vh-275px)]">
+        <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8 min-h-[500px]">
           {isLoading ? (
             <div className="flex justify-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm">
               <span className="text-slate-500 font-medium flex items-center gap-2">
@@ -343,7 +357,7 @@ export default function RiwayatTransaksiPage() {
               </span>
             </div>
           ) : transactionGroups.length > 0 ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm flex flex-col h-full overflow-hidden">
               
               {/* Top Select Bar */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
@@ -421,12 +435,12 @@ export default function RiwayatTransaksiPage() {
                                 )}
                               </div>
                             <div className="flex flex-col gap-1.5">
-                              <span className="font-bold text-slate-800 text-base">{item.description}</span>
+                              <span className="font-bold text-slate-800 text-sm md:text-base">{item.description}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">
+                              <span className="text-[9px] md:text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md">
                                 {item.category}
                               </span>
-                              <span className="text-xs font-medium text-slate-400">
+                              <span className="text-[10px] md:text-xs font-medium text-slate-400">
                                 {new Date(item.date).toLocaleDateString('id-ID')}
                               </span>
                             </div>

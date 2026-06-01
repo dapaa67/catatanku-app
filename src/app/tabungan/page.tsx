@@ -112,29 +112,38 @@ export default function TabunganPage() {
   return (
     <div className="flex flex-col w-full pb-20 text-slate-800">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <h1 className="text-2xl font-bold mb-1 text-slate-800">Tabungan</h1>
         <p className="text-sm font-medium text-slate-500">Kelola target tabunganmu</p>
       </div>
 
       {/* Top Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-8">
         {/* Total Target */}
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-3">Total Target</span>
-          <h2 className="text-3xl font-bold text-slate-800">{isLoading ? "..." : formatRupiah(totalTarget)}</h2>
+        <div className="bg-white border border-primary/30 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm flex flex-col justify-center">
+          <span className="text-[11px] sm:text-sm font-bold text-slate-800 mb-1 sm:mb-3 truncate">
+            <span className="sm:hidden">Target</span>
+            <span className="hidden sm:inline">Total Target</span>
+          </span>
+          <h2 className="text-[13px] sm:text-3xl font-bold text-slate-800 truncate">{isLoading ? "..." : formatRupiah(totalTarget)}</h2>
         </div>
 
         {/* Total Terkumpul */}
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-3">Total Terkumpul</span>
-          <h2 className="text-3xl font-bold text-slate-800">{isLoading ? "..." : formatRupiah(totalTerkumpul)}</h2>
+        <div className="bg-white border border-primary/30 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm flex flex-col justify-center">
+          <span className="text-[11px] sm:text-sm font-bold text-slate-800 mb-1 sm:mb-3 truncate">
+            <span className="sm:hidden">Terkumpul</span>
+            <span className="hidden sm:inline">Total Terkumpul</span>
+          </span>
+          <h2 className="text-[13px] sm:text-3xl font-bold text-slate-800 truncate">{isLoading ? "..." : formatRupiah(totalTerkumpul)}</h2>
         </div>
 
         {/* Progress Rata-rata */}
-        <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col justify-center">
-          <span className="text-sm font-bold text-slate-800 mb-3">Progress Rata-rata</span>
-          <h2 className="text-3xl font-bold text-slate-800">{isLoading ? "..." : `${progressAvg.toFixed(1).replace('.', ',')}%`}</h2>
+        <div className="bg-white border border-primary/30 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm flex flex-col justify-center">
+          <span className="text-[11px] sm:text-sm font-bold text-slate-800 mb-1 sm:mb-3 truncate">
+            <span className="sm:hidden">Progress</span>
+            <span className="hidden sm:inline">Progress Rata-rata</span>
+          </span>
+          <h2 className="text-[13px] sm:text-3xl font-bold text-slate-800 truncate">{isLoading ? "..." : `${progressAvg.toFixed(1).replace('.', ',')}%`}</h2>
         </div>
       </div>
 
@@ -163,23 +172,33 @@ export default function TabunganPage() {
       </div>
 
       {/* Filters & Bulk Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div className="flex flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-4 mb-8 w-full">
+        <div className="grid grid-cols-2 sm:flex sm:flex-row gap-3 w-full sm:w-auto">
           <button 
             onClick={() => setSortBy(sortBy === "name" ? "progress" : "name")}
-            className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
+            className="flex items-center justify-between gap-1 sm:gap-2 bg-white border border-primary/30 rounded-full px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer w-full sm:w-auto"
           >
-            <AlignLeft className="w-4 h-4 text-slate-500" />
-            <span>{sortBy === "name" ? "Berdasarkan Nama" : "Berdasarkan Progress"}</span>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
+              <AlignLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 shrink-0" />
+              <span className="truncate">
+                <span className="sm:hidden">{sortBy === "name" ? "Nama" : "Progress"}</span>
+                <span className="hidden sm:inline">{sortBy === "name" ? "Berdasarkan Nama" : "Berdasarkan Progress"}</span>
+              </span>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 shrink-0" />
           </button>
           <button 
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="flex items-center gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer"
+            className="flex items-center justify-between gap-1 sm:gap-2 bg-white border border-primary/30 rounded-full px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors cursor-pointer w-full sm:w-auto"
           >
-            <TrendingUp className={`w-4 h-4 text-slate-500 transition-transform ${sortOrder === "desc" ? "rotate-180" : ""}`} />
-            <span>{sortOrder === "asc" ? "Meningkat" : "Menurun"}</span>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden">
+              <TrendingUp className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 shrink-0 transition-transform ${sortOrder === "desc" ? "rotate-180" : ""}`} />
+              <span className="truncate">
+                <span className="sm:hidden">{sortOrder === "asc" ? "Naik" : "Turun"}</span>
+                <span className="hidden sm:inline">{sortOrder === "asc" ? "Meningkat" : "Menurun"}</span>
+              </span>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 shrink-0" />
           </button>
         </div>
 
@@ -225,7 +244,7 @@ export default function TabunganPage() {
           <div className="flex justify-center p-8"><span className="text-slate-500">Memuat tabungan...</span></div>
         ) : sortedTabungan.length > 0 ? (
           sortedTabungan.map((item) => (
-            <Link href={`/tabungan/${item.id}`} key={item.id} className={`bg-white border rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row items-center gap-6 relative hover:shadow-md transition-all cursor-pointer ${selectedIds.includes(item.id) ? 'border-primary/50 ring-2 ring-primary/20' : 'border-primary/30'}`}>
+            <Link href={`/tabungan/${item.id}`} key={item.id} className={`bg-white border rounded-[2rem] p-4 sm:p-6 shadow-sm flex items-center gap-3 sm:gap-6 relative hover:shadow-md transition-all cursor-pointer ${selectedIds.includes(item.id) ? 'border-primary/50 ring-2 ring-primary/20' : 'border-primary/30'}`}>
               
               {/* Checkbox */}
               <div 
@@ -248,35 +267,35 @@ export default function TabunganPage() {
               </div>
               
               {/* Absolute % text */}
-              <div className="absolute top-6 right-6 font-bold text-slate-800 text-sm">
+              <div className="absolute top-4 sm:top-6 right-5 sm:right-6 font-bold text-slate-800 text-xs sm:text-sm bg-slate-100 sm:bg-transparent px-2 sm:px-0 py-0.5 sm:py-0 rounded-full sm:rounded-none">
                 {item.progressPercent}%
               </div>
 
               {/* Photo Box */}
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
                 {item.photoUrl ? (
                   <img src={item.photoUrl} alt={item.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="font-bold text-slate-800 text-sm">foto</span>
+                  <span className="font-bold text-slate-800 text-[10px] sm:text-sm">foto</span>
                 )}
               </div>
 
               {/* Content Details */}
-              <div className="flex flex-col flex-1 justify-center pt-2">
-                <h3 className="font-bold text-slate-800 mb-1 pr-10">{item.name}</h3>
-                <p className="text-sm font-medium text-slate-500 mb-4">
+              <div className="flex flex-col flex-1 justify-center min-w-0 pt-1">
+                <h3 className="font-bold text-slate-800 text-sm sm:text-base mb-1 pr-12 truncate">{item.name}</h3>
+                <p className="text-xs sm:text-sm font-medium text-slate-500 mb-3 sm:mb-4 truncate">
                   {formatRupiah(Number(item.currentAmount))} / {formatRupiah(Number(item.targetAmount))}
                 </p>
                 
                 {/* Progress Bar */}
-                <div className="w-full h-1.5 bg-slate-600 rounded-full overflow-hidden mb-3">
+                <div className="w-full h-1.5 bg-slate-600 rounded-full overflow-hidden mb-2 sm:mb-3">
                   <div 
-                    className="h-full bg-primary/80 rounded-full" 
+                    className="h-full bg-primary/80 rounded-full transition-all duration-500" 
                     style={{ width: `${item.progressPercent}%` }}
                   ></div>
                 </div>
                 
-                <div className="flex justify-between items-center text-xs font-bold">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-[10px] sm:text-xs font-bold gap-1 sm:gap-0">
                   <span className="text-slate-500">Estimasi: {item.deadline ? new Date(item.deadline).toLocaleDateString('id-ID') : '-'}</span>
                   <span className="text-[#10b981]">{item.planAmount ? `${formatRupiah(Number(item.planAmount))}/${item.planType}` : '-'}</span>
                 </div>

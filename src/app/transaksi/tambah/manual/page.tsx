@@ -325,7 +325,7 @@ export default function TambahTransaksiPage() {
   return (
     <div className="flex flex-col gap-6 w-full pb-20">
       {/* Header Panel */}
-      <div className="relative rounded-3xl p-8 flex flex-col items-center justify-center text-white shadow-md mb-2">
+      <div className="relative rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-white shadow-md mb-2">
         {/* Background & abstract shapes wrapper (with overflow-hidden) */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark rounded-3xl overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
@@ -336,10 +336,10 @@ export default function TambahTransaksiPage() {
           <div className="bg-white/20 p-3 rounded-2xl mb-4 backdrop-blur-sm border border-white/30 shadow-inner">
             <Zap className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold mb-2 flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold mb-2 flex items-center gap-2">
             Catat Cepat
           </h1>
-          <p className="text-sm text-white/90 max-w-md text-center leading-relaxed mb-6">
+          <p className="text-xs md:text-sm text-white/90 max-w-md text-center leading-relaxed mb-6 px-4">
             Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
           </p>
           
@@ -396,14 +396,14 @@ export default function TambahTransaksiPage() {
             onChange={(e) => setNaturalInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Contoh: Beli makan siang 25k, gojek 15rb, token listrik 100k..."
-            className="w-full bg-transparent border-none p-6 text-slate-900 text-lg font-medium placeholder:text-slate-400 outline-none resize-none h-36"
+            className="w-full bg-transparent border-none p-4 md:p-6 text-slate-900 text-base md:text-lg font-medium placeholder:text-slate-400 outline-none resize-none h-32 md:h-36"
           ></textarea>
           
           <div className="absolute bottom-3 left-4 right-3 flex items-center justify-between">
             <button
               onClick={handleParseInput}
               disabled={isParsing || !naturalInput.trim()}
-              className="ml-auto px-6 py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:scale-100 disabled:shadow-none shadow-lg shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
+              className="ml-auto px-4 py-2 md:px-6 md:py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-sm md:text-base font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:scale-100 disabled:shadow-none shadow-lg shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
             >
               <span>Proses Sekarang</span>
             </button>
@@ -433,7 +433,7 @@ export default function TambahTransaksiPage() {
             {drafts.map((draft) => (
               <div 
                 key={draft.id} 
-                className={`bg-white rounded-2xl border-l-4 ${draft.type === 'pemasukan' ? 'border-l-[#0f9a95] border-y border-r border-slate-100' : 'border-l-red-500 border-y border-r border-slate-100'} p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-500`}
+                className={`bg-white rounded-2xl border-l-4 ${draft.type === 'pemasukan' ? 'border-l-[#0f9a95] border-y border-r border-slate-100' : 'border-l-red-500 border-y border-r border-slate-100'} p-4 md:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-500`}
               >
                 {/* AI Loading State Overlay */}
                 {draft.isLoading && (
@@ -558,7 +558,7 @@ export default function TambahTransaksiPage() {
           </div>
 
           {/* Floating Premium Pill Action */}
-          <div className="fixed bottom-6 left-0 right-0 sm:left-64 flex justify-center z-40 pointer-events-none px-4">
+          <div className="fixed bottom-6 left-0 right-0 lg:left-64 flex justify-center z-40 pointer-events-none px-4">
             <div className="bg-white/90 backdrop-blur-xl border border-slate-200/50 p-3 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex items-center justify-between gap-6 pointer-events-auto transform transition-all hover:-translate-y-1 w-full max-w-xl mx-auto">
               <div className="px-4 hidden sm:block">
                 <span className="text-sm font-semibold text-slate-600">
