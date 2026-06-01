@@ -32,10 +32,10 @@ export default function RiwayatTransaksiPage() {
   const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Mobile filter toggle
+  // Toggle filter di mode mobile
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Bulk delete states
+  // State untuk fitur hapus massal
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -80,7 +80,7 @@ export default function RiwayatTransaksiPage() {
 
   useEffect(() => {
     fetchTransactions();
-    // Reset selection when filters change
+    // Reset pilihan saat filter berubah
     setSelectedIds([]);
   }, [fetchTransactions]);
 
@@ -174,9 +174,9 @@ export default function RiwayatTransaksiPage() {
 
   return (
     <div className="w-full">
-      {/* Header Panel */}
+      {/* Panel Header */}
       <div className="bg-primary rounded-[2rem] p-8 text-white mb-8 shadow-md relative z-30">
-        {/* Abstract background shapes */}
+        {/* Background bentuk abstrak */}
         <div className="absolute inset-0 rounded-[2rem] overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
@@ -189,7 +189,7 @@ export default function RiwayatTransaksiPage() {
           </div>
           
           <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
-            {/* Wallet Selector */}
+            {/* Pilihan Dompet */}
             <div className="relative md:w-72">
               <button 
                 onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
@@ -233,7 +233,7 @@ export default function RiwayatTransaksiPage() {
               )}
             </div>
             
-            {/* Search */}
+            {/* Kolom Pencarian */}
             <div className="flex-1 bg-white text-slate-800 rounded-full px-5 py-3.5 flex items-center gap-3 shadow-sm focus-within:ring-2 focus-within:ring-primary/50 transition-all">
               <Search className="w-5 h-5 text-slate-400" />
               <input 
@@ -251,7 +251,7 @@ export default function RiwayatTransaksiPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
         
-        {/* Mobile Filter Toggle Button */}
+        {/* Tombol Toggle Filter Mobile */}
         <div className="lg:hidden w-full">
           <button 
             onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
@@ -262,13 +262,13 @@ export default function RiwayatTransaksiPage() {
           </button>
         </div>
 
-        {/* ── Kolom Kiri: Filters Sidebar ── */}
+        {/* Sidebar filter di kiri */}
         <div className={`lg:col-span-1 flex-col gap-6 sticky top-6 self-start ${isMobileFilterOpen ? "flex" : "hidden lg:flex"}`}>
           
           <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-sm">
             <h3 className="font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Filter Transaksi</h3>
             
-            {/* Type Tabs (Vertical) */}
+            {/* Tab Tipe Transaksi */}
             <div className="flex flex-col gap-2 mb-6">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tipe</label>
               {tabs.map(tab => {
@@ -292,7 +292,7 @@ export default function RiwayatTransaksiPage() {
               })}
             </div>
             
-            {/* Time Filter with Calendar */}
+            {/* Filter Waktu */}
             <div className="mb-6">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Rentang Waktu</label>
               <div className="flex flex-col gap-3">
@@ -325,7 +325,7 @@ export default function RiwayatTransaksiPage() {
               )}
             </div>
             
-            {/* Category Filter */}
+            {/* Filter Kategori */}
             <div>
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Kategori</label>
               <div className="flex flex-wrap gap-2">
@@ -347,7 +347,7 @@ export default function RiwayatTransaksiPage() {
           </div>
         </div>
 
-        {/* ── Kolom Kanan: Transaction List ── */}
+        {/* Daftar transaksi di kanan */}
         <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8 min-h-[500px]">
           {isLoading ? (
             <div className="flex justify-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm">
@@ -359,7 +359,7 @@ export default function RiwayatTransaksiPage() {
           ) : transactionGroups.length > 0 ? (
             <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm flex flex-col h-full overflow-hidden">
               
-              {/* Top Select Bar */}
+              {/* Baris Pilihan Atas */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-4">
                   <div 
@@ -372,7 +372,7 @@ export default function RiwayatTransaksiPage() {
                     }}
                     className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                       selectedIds.length === filteredTransactions.length && filteredTransactions.length > 0
-                        ? 'bg-[#00a859]' // A nice green from the reference image
+                        ? 'bg-[#00a859]' // warna hijau sesuai desain
                         : 'border-2 border-slate-300 hover:border-slate-400'
                     }`}
                   >
@@ -488,7 +488,7 @@ export default function RiwayatTransaksiPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Modal Konfirmasi Hapus */}
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">

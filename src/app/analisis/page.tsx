@@ -75,7 +75,7 @@ export default function AnalisisPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-10 text-slate-800">
-      {/* Header */}
+      {/* Bagian Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold mb-1 text-slate-800">Analisis Keuangan</h1>
@@ -83,7 +83,7 @@ export default function AnalisisPage() {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          {/* Wallet Picker */}
+          {/* Pilihan Dompet */}
           <div className="relative z-20 w-full sm:w-auto">
             <div 
               className="flex items-center justify-between sm:justify-start gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none w-full"
@@ -127,7 +127,7 @@ export default function AnalisisPage() {
             )}
           </div>
 
-          {/* Month Picker */}
+          {/* Pilihan Bulan */}
           <div className="relative z-10 w-full sm:w-auto">
             <div 
               className="flex items-center justify-between sm:justify-start gap-2 bg-white border border-primary/30 rounded-full px-5 py-2.5 shadow-sm text-slate-700 cursor-pointer hover:border-primary hover:text-primary transition-colors select-none w-full"
@@ -172,7 +172,7 @@ export default function AnalisisPage() {
         </div>
       </div>
 
-      {/* Top Cards */}
+      {/* Kartu Informasi Atas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Pemasukan */}
         <div className="bg-white border border-primary/30 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
@@ -225,7 +225,7 @@ export default function AnalisisPage() {
         </div>
       </div>
 
-      {/* Tren Keuangan Chart */}
+      {/* Grafik Tren Keuangan */}
       <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -244,7 +244,7 @@ export default function AnalisisPage() {
           </div>
         </div>
 
-        {/* Custom Bar Chart Layout */}
+        {/* Grafik Bar Kustom */}
         <div className="relative h-64 flex mt-4 mb-8">
           {(() => {
             const chartData = summary?.trendLast6Months || [];
@@ -257,7 +257,7 @@ export default function AnalisisPage() {
 
             return (
               <>
-                {/* Y Axis */}
+                {/* Sumbu Y */}
                 <div className="flex flex-col justify-between text-xs font-bold text-slate-400 h-full pr-4 pb-6 w-12 items-end">
                   <span>{formatY(maxVal)}</span>
                   <span>{formatY(maxVal * 0.75)}</span>
@@ -267,7 +267,7 @@ export default function AnalisisPage() {
 
                 {/* Chart Area */}
                 <div className="flex-1 relative border-b border-slate-300">
-                  {/* Grid lines */}
+                  {/* Garis Latar */}
                   <div className="absolute inset-0 flex flex-col justify-between pb-6">
                     <div className="border-t border-dashed border-slate-200 w-full h-0"></div>
                     <div className="border-t border-dashed border-slate-200 w-full h-0"></div>
@@ -275,7 +275,7 @@ export default function AnalisisPage() {
                     <div className="border-t border-dashed border-slate-200 w-full h-0"></div>
                   </div>
 
-                  {/* Bars container */}
+                  {/* Wadah Grafik Bar */}
                   <div className="absolute inset-0 pb-6 flex justify-around items-end z-10 px-2 sm:px-6">
                     {chartData.map((data, idx) => {
                       const incomeHeight = maxVal > 0 ? (data.income / maxVal) * 100 : 0;
@@ -308,7 +308,7 @@ export default function AnalisisPage() {
                     })}
                   </div>
 
-                  {/* X Axis */}
+                  {/* Sumbu X */}
                   <div className="absolute bottom-0 left-0 right-0 flex justify-around px-2 sm:px-6 transform translate-y-full pt-3 text-xs md:text-sm font-bold text-slate-500">
                     {chartData.map((data, idx) => (
                       <span key={idx} className="text-center w-full max-w-[60px] truncate sm:overflow-visible">
@@ -324,7 +324,7 @@ export default function AnalisisPage() {
         </div>
       </div>
 
-      {/* Top Categories */}
+      {/* Kategori Terbesar */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
         {/* Pengeluaran */}
         <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">

@@ -44,11 +44,11 @@ export function SelectWalletModal({
         {/* Header Modal */}
         <h2 className="text-xl font-bold text-primary text-center mb-6">Pilih Tabungan</h2>
         
-        {/* Konten Scrollable */}
+        {/* Konten Bisa di-Scroll */}
         <div className="overflow-y-auto flex-1 pr-2">
           <p className="text-xs font-bold text-slate-400 mb-3 tracking-wider">DOMPET REGULER</p>
           <div className="flex flex-col gap-3">
-            {/* Opsi Semua Dompet */}
+            {/* Pilihan Semua Dompet */}
             <div 
               onClick={() => onSelectWallet("all")}
               className={`flex items-center justify-between p-4 rounded-2xl transition-colors cursor-pointer border ${activeWalletId === "all" ? "bg-primary/5 border-primary/30 shadow-[0_2px_10px_rgba(15,154,149,0.1)]" : "bg-slate-50 hover:bg-slate-100 border-transparent"}`}
@@ -75,7 +75,7 @@ export function SelectWalletModal({
                 className="flex items-center justify-between bg-slate-100 p-4 rounded-2xl hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  {/* Lingkaran Warna / Image Dompet */}
+                  {/* Gambar atau Warna Dompet */}
                   <div 
                     className="w-12 h-12 rounded-full flex-shrink-0 bg-cover bg-center"
                     style={{ 
@@ -84,7 +84,7 @@ export function SelectWalletModal({
                     }}
                   ></div>
                   
-                  {/* Info Dompet */}
+                  {/* Detail Dompet */}
                   <div className="text-left">
                     <h3 className="text-slate-800 font-bold text-lg">{wallet.name}</h3>
                     <p className="text-emerald-500 font-semibold text-sm">
@@ -97,7 +97,7 @@ export function SelectWalletModal({
                   </div>
                 </div>
 
-                {/* Aksi (Icons) */}
+                {/* Aksi Tambahan */}
                 <div className="flex items-center gap-4 text-slate-400">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onEditWalletClick?.(wallet); }}
@@ -120,7 +120,7 @@ export function SelectWalletModal({
           </div>
         </div>
 
-        {/* Footer Section (Total & Pindah Saldo) */}
+        {/* Bagian Bawah */}
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
           <div className="bg-slate-200/50 px-4 py-2 rounded-xl">
             <span className="text-sm font-bold text-slate-600">

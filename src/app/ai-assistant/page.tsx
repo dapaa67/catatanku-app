@@ -9,7 +9,7 @@ type Message = {
   content: string;
 };
 
-// Render teks AI jadi tampilan yang rapi & aesthetic
+// Ubah teks AI jadi tampilan rapi
 function formatAIMessage(text: string) {
   const paragraphs = text.split(/\n{2,}/);
 
@@ -38,7 +38,7 @@ function formatAIMessage(text: string) {
           );
         }
 
-        // Paragraf campur list & teks — render line by line
+        // Render teks baris per baris
         return (
           <div key={pi} className="flex flex-col gap-1.5">
             {lines.map((line, li) => {
@@ -97,21 +97,21 @@ export default function AIAssistantPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    // Get user name
+    // Ambil nama user
     const fetchUser = async () => {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const name = user.user_metadata?.name || user.email?.split("@")[0] || "Pengguna";
-          // Capitalize first word only
+          // Huruf kapital di awal kata
           setUserName(name.split(" ")[0].charAt(0).toUpperCase() + name.split(" ")[0].slice(1));
         }
       } catch (e) {}
     };
     fetchUser();
 
-    // Session
+    // Cek sesi login
     let sid = localStorage.getItem("catatanku_chat_session");
     if (!sid) {
       sid = crypto.randomUUID();
@@ -119,7 +119,7 @@ export default function AIAssistantPage() {
     }
     setSessionId(sid);
 
-    // Restore history
+    // Kembalikan riwayat chat
     const savedMessages = localStorage.getItem("catatanku_chat_history");
     if (savedMessages) {
       try { setMessages(JSON.parse(savedMessages)); } catch (e) {}
@@ -144,7 +144,7 @@ export default function AIAssistantPage() {
     setInput("");
     setIsLoading(true);
 
-    // Reset textarea height
+    // Kembalikan ukuran awal input teks
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
     }
@@ -217,7 +217,7 @@ export default function AIAssistantPage() {
     <div className="w-full h-full flex flex-col md:items-center md:justify-center md:py-6">
       <div className="flex flex-col w-full h-full md:max-w-4xl md:h-[calc(100vh-80px)] md:max-h-[850px] bg-slate-50 md:bg-white md:border md:border-slate-200 md:rounded-[2.5rem] md:shadow-sm relative overflow-hidden">
 
-        {/* ── RESET BUTTON (top right, only visible when chatting) ── */}
+        {/* Tombol reset percakapan, muncul saat ada pesan */}
         {!isEmpty && (
           <div className="absolute top-4 right-4 md:right-6 z-10 animate-in fade-in duration-300">
             <button
@@ -230,12 +230,12 @@ export default function AIAssistantPage() {
           </div>
         )}
 
-        {/* ── SCROLLABLE CHAT AREA ── */}
+        {/* Area chat yang bisa di-scroll */}
         <div className="flex-1 overflow-y-auto w-full relative">
           <div className={`max-w-3xl mx-auto px-4 sm:px-6 md:py-8 flex flex-col gap-6 min-h-full ${!isEmpty ? 'pt-16 pb-6' : 'py-6'}`}>
 
           {isEmpty ? (
-            /* ── Welcome / Empty State ── */
+            // Halaman awal saat belum ada percakapan
             <div className="flex flex-col items-center justify-center flex-1 min-h-[60vh] text-center mt-8 md:mt-0">
               <div className="bg-primary/10 p-4 md:p-5 rounded-3xl mb-4 md:mb-6">
                 <Sparkles className="w-8 h-8 md:w-9 md:h-9 text-primary" />
@@ -247,7 +247,7 @@ export default function AIAssistantPage() {
                 Tanyakan apapun tentang keuangan, tips menabung, atau strategi budgeting.
               </p>
 
-              {/* Suggestion Chips */}
+              {/* Tombol Rekomendasi Chat */}
               <div className="flex flex-wrap gap-2 justify-center px-2">
                 {SUGGESTION_PROMPTS.map((prompt) => (
                   <button
@@ -262,19 +262,19 @@ export default function AIAssistantPage() {
             </div>
 
           ) : (
-            /* ── Messages ── */
+            // Tampilkan daftar pesan
             <>
               {messages.map((msg, i) => (
                 <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                   {msg.role === "user" ? (
-                    /* User bubble — right aligned pill */
+                    // Pesan user, rata kanan
                     <div className="flex justify-end">
                       <div className="bg-primary text-white text-sm font-medium px-5 py-3 rounded-3xl rounded-br-lg max-w-[78%] leading-relaxed shadow-sm">
                         {msg.content}
                       </div>
                     </div>
                   ) : (
-                    /* AI response — left aligned, formatted */
+                    // Respons AI, rata kiri dengan format rapi
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2">
                         <div className="bg-primary/10 p-1.5 rounded-lg">
@@ -285,7 +285,7 @@ export default function AIAssistantPage() {
                       <div className="pl-1">
                         {formatAIMessage(msg.content)}
                       </div>
-                      {/* Action row */}
+                      {/* Tombol aksi: copy, feedback */}
                       <div className="flex items-center gap-1 pl-1">
                         <button
                           onClick={() => handleCopy(msg.content, i)}
@@ -306,7 +306,7 @@ export default function AIAssistantPage() {
                 </div>
               ))}
 
-              {/* Typing indicator */}
+              {/* Indikator Mengetik AI */}
               {isLoading && (
                 <div className="animate-in fade-in duration-200">
                   <div className="flex items-center gap-2 mb-3">
@@ -329,12 +329,12 @@ export default function AIAssistantPage() {
         </div>
       </div>
 
-      {/* ── INPUT BAR (Gemini pill) ── */}
-      <div className="shrink-0 bg-slate-50 md:bg-white px-4 pt-2 pb-4 md:pb-6 border-t md:border-t-0 border-slate-200/50">
+        {/* Input bar di bawah layar */}
+        <div className="shrink-0 bg-slate-50 md:bg-white px-4 pt-2 pb-4 md:pb-6 border-t md:border-t-0 border-slate-200/50">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-end gap-2 md:gap-3 bg-white md:bg-slate-50 rounded-3xl px-4 md:px-5 py-2.5 md:py-3 border border-slate-200 md:border-transparent shadow-sm focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
             
-            {/* Input */}
+            {/* Textarea auto-resize untuk input pesan */}
             <textarea
               ref={inputRef}
               rows={1}
@@ -349,7 +349,7 @@ export default function AIAssistantPage() {
               className="flex-1 bg-transparent text-xs md:text-sm text-slate-700 placeholder:text-slate-400 outline-none font-medium resize-none overflow-y-auto py-1.5 md:py-2 min-h-[32px] max-h-[100px] md:max-h-[120px] scrollbar-hide"
             />
 
-            {/* Send button */}
+            {/* Tombol kirim pesan */}
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isLoading}

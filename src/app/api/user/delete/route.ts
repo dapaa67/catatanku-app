@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE() {
   try {
-    // 1. Ambil user yang sedang login via session
+    // Ambil user yang sedang login via session
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -15,7 +15,7 @@ export async function DELETE() {
 
     const userId = user.id;
 
-    // 2. Hapus semua data user dari Prisma (urutan: child dulu, baru parent)
+    // Hapus semua data user dari Prisma (urutan: child dulu, baru parent)
     // Hapus SavingsTransaction (relasi dari SavingsGoal dan Profile)
     await prisma.savingsTransaction.deleteMany({ where: { userId } });
 
@@ -35,7 +35,7 @@ export async function DELETE() {
     // Hapus Profile
     await prisma.profile.delete({ where: { id: userId } });
 
-    // 3. Hapus user dari Supabase Auth (perlu SUPABASE_SERVICE_ROLE_KEY)
+    // Hapus user dari Supabase Auth (perlu SUPABASE_SERVICE_ROLE_KEY)
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.warn("SUPABASE_SERVICE_ROLE_KEY belum diset, skip delete dari Supabase Auth");
     } else {
@@ -53,7 +53,7 @@ export async function DELETE() {
     return NextResponse.json({ message: "Akun berhasil dihapus" }, { status: 200 });
 
   } catch (err: any) {
-    console.error("DELETE /api/user/delete error:", err);
+    console.error("Error saat hapus user:", err);
     return NextResponse.json({ error: err.message || "Gagal menghapus akun" }, { status: 500 });
   }
 }

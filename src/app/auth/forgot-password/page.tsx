@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
         <div className="w-full max-w-[400px] my-auto flex-shrink-0">
 
-          {/* Logo mobile */}
+          {/* Logo Mobile */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           {isSent ? (
-            /* ── State: Email Terkirim ── */
+            // Tampilan konfirmasi setelah email berhasil dikirim
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
                 <CheckCircle2 className="w-9 h-9 text-green-500" />
@@ -81,9 +81,9 @@ export default function ForgotPasswordPage() {
               </button>
             </div>
           ) : (
-            /* ── State: Form Email ── */
+            // Form utama untuk memasukkan email reset
             <>
-              {/* Back link */}
+              {/* Tombol Kembali */}
               <Link
                 href="/auth/login"
                 className="flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-primary transition-colors mb-8"
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
                 </p>
               </div>
 
-              {/* Error Banner */}
+              {/* Banner Error */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">
                   ⚠️ {error}

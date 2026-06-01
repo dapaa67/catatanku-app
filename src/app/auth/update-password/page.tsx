@@ -73,7 +73,7 @@ export default function UpdatePasswordPage() {
       <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
         <div className="w-full max-w-[400px] my-auto flex-shrink-0">
 
-          {/* Logo mobile */}
+          {/* Logo Mobile */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
@@ -82,7 +82,7 @@ export default function UpdatePasswordPage() {
           </div>
 
           {isDone ? (
-            /* ── State: Berhasil ── */
+            // Tampilan setelah password berhasil diperbarui
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
                 <CheckCircle2 className="w-9 h-9 text-green-500" />
@@ -97,7 +97,7 @@ export default function UpdatePasswordPage() {
             </div>
 
           ) : isValidSession === false ? (
-            /* ── State: Link tidak valid / expired ── */
+            // Tampilan jika link sudah kadaluarsa atau tidak valid
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
                 <Lock className="w-8 h-8 text-red-400" />
@@ -115,14 +115,14 @@ export default function UpdatePasswordPage() {
             </div>
 
           ) : isValidSession === null ? (
-            /* ── State: Memvalidasi sesi ── */
+            // Tampilan loading saat memvalidasi token dari email
             <div className="flex flex-col items-center justify-center gap-4 py-16">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-slate-500 text-sm">Memvalidasi link...</p>
             </div>
 
           ) : (
-            /* ── State: Form Buat Password Baru ── */
+            // Form utama untuk mengisi password baru
             <>
               {/* Judul */}
               <div className="mb-8">
@@ -132,7 +132,7 @@ export default function UpdatePasswordPage() {
                 </p>
               </div>
 
-              {/* Error Banner */}
+              {/* Banner Error */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">
                   ⚠️ {error}

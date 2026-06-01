@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
     }
 
-    // 1. Ambil data keuangan user sebagai context
+    // Ambil semua data keuangan user secara paralel supaya lebih efisien
     const [wallets, transactions, savings] = await Promise.all([
       prisma.wallet.findMany({
         where: { userId: user.id },
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       })
     ]);
 
-    // 2. Olah context
+    // Format data keuangan menjadi string yang bisa dibaca AI
     const totalSaldo = wallets.reduce((acc, w) => acc + Number(w.balance), 0);
     
     const walletContext = wallets.map(w => 
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       return `- ${s.name}: ${targetStr}. ${planStr}. ${deadlineStr}`;
     }).join('\n');
 
+    // Susun system prompt yang menyertakan konteks keuangan user
     const contextString = `[INFORMASI SYSTEM - KONTEKS DATA KEUANGAN TERKINI USER]
 Anda adalah "AI Catatanku", asisten keuangan pribadi anak muda yang super asik, gaul, dan santai.
 ATURAN MEMBALAS:
@@ -71,7 +72,7 @@ ${savingContext || "Belum ada tabungan"}
 [PESAN DARI USER]:
 ${message}`;
 
-    // 3. Tembak FastAPI Mas Yobby
+    // Kirim pesan ke FastAPI backend dengan timeout yang cukup untuk cold start HuggingFace
     const aiRes = await fetch(`${FASTAPI_URL}/api/chat/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,7 +94,7 @@ ${message}`;
     });
 
   } catch (error: unknown) {
-    console.error("AI Assistant Error:", error);
+    console.error("Error Asisten AI:", error);
     return NextResponse.json(
       { error: "Gagal memproses pesan" },
       { status: 500 }

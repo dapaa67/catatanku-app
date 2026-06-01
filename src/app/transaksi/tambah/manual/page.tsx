@@ -21,7 +21,7 @@ type DraftTransaction = {
   category: string;
   date: string;
   time: string;
-  isLoading: boolean; // true while AI is predicting
+  isLoading: boolean; // true selagi AI sedang memprediksi kategori
   originalInput: string;
   originalCategory: string | null;
   isCategoryCorrect: boolean | null;
@@ -30,16 +30,16 @@ type DraftTransaction = {
 export default function TambahTransaksiPage() {
   const router = useRouter();
   
-  // Wallet state
+  // State untuk dompet
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
   
-  // Form state
+  // State form input transaksi
   const [naturalInput, setNaturalInput] = useState<string>("");
   const [drafts, setDrafts] = useState<DraftTransaction[]>([]);
   
-  // App state
+  // State umum aplikasi
   const [isParsing, setIsParsing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function TambahTransaksiPage() {
   const [isClient, setIsClient] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Initialize and fetch wallets
+  // Inisialisasi komponen dan fetch data dompet
   useEffect(() => {
     setIsClient(true);
     
@@ -88,7 +88,7 @@ export default function TambahTransaksiPage() {
     }
   };
 
-  // Helper to parse price from string
+  // Helper untuk mengekstrak nominal dan nama transaksi dari input teks
   const parseAmountAndName = (part: string) => {
     const priceRegex = /((?:\d{1,3}(?:\.\d{3})+|\d+))\s*(rb|ribu|k|jt|juta|m)?\b/i;
     const match = part.match(priceRegex);
@@ -110,7 +110,7 @@ export default function TambahTransaksiPage() {
       }
       
       amount = num;
-      // Remove the matched price from the name
+      // Hapus nominal dari nama agar nama bersih
       name = part.replace(match[0], '').trim();
     }
     
@@ -122,14 +122,14 @@ export default function TambahTransaksiPage() {
     
     setIsParsing(true);
     
-    // Split by comma
+    // Pisah input berdasarkan koma, satu koma = satu transaksi
     const parts = naturalInput.split(",").map(p => p.trim()).filter(Boolean);
     
     const now = new Date();
     const currentDate = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().split(" ")[0].substring(0, 5);
 
-    // Initial draft generation
+    // Buat draft awal dari setiap item input
     const newDrafts: DraftTransaction[] = parts.map((part) => {
       const { name, amount } = parseAmountAndName(part);
       return {
@@ -147,11 +147,11 @@ export default function TambahTransaksiPage() {
       };
     });
 
-    // Add to state immediately so user sees loading cards
+    // Tampilkan draft dulu ke UI sebelum prediksi AI selesai
     setDrafts(prev => [...newDrafts, ...prev]);
-    setNaturalInput(""); // clear input
+    setNaturalInput(""); // kosongkan input
     
-    // Predict categories in parallel
+    // Prediksi kategori semua draft secara paralel
     await Promise.all(
       newDrafts.map(async (draft) => {
         try {
@@ -166,14 +166,14 @@ export default function TambahTransaksiPage() {
             if (data.hasil && data.hasil.length > 0) {
               let predictedKategori = data.hasil[0].kategori;
               
-              // Heuristic override for obvious income keywords
+              // Override otomatis jika nama transaksi jelas-jelas pemasukan
               const lowerName = draft.name.toLowerCase();
               const incomeKeywords = ["gaji", "arisan", "dapat", "terima", "bonus", "cair", "profit", "dividen", "jual", "refund"];
               let hasIncomeKeyword = incomeKeywords.some(kw => lowerName.includes(kw));
               
-              // Smart heuristic for "utang" / "hutang"
-              // "rusdi bayar utang" -> Pemasukan (someone paying us)
-              // "bayar utang ke rusdi" -> Pengeluaran (we are paying)
+              // Penanganan khusus kata "utang"/"hutang"
+              // Contoh: "rusdi bayar utang" → Pemasukan
+              // Contoh: "bayar utang ke rusdi" → Pengeluaran
               if (lowerName.includes("bayar utang") || lowerName.includes("bayar hutang")) {
                 if (!lowerName.trim().startsWith("bayar")) {
                   hasIncomeKeyword = true;
@@ -183,7 +183,7 @@ export default function TambahTransaksiPage() {
               let isIncome = hasIncomeKeyword || INCOME_CATEGORIES.includes(predictedKategori);
               
               if (hasIncomeKeyword && !INCOME_CATEGORIES.includes(predictedKategori)) {
-                // If it's obviously an income but AI said expense, override to Pendapatan
+                // Kalau jelas pemasukan tapi AI bilang pengeluaran, paksa override ke Pendapatan
                 predictedKategori = "Pendapatan";
                 isIncome = true;
               }
@@ -207,7 +207,7 @@ export default function TambahTransaksiPage() {
           console.error("Gagal memprediksi kategori untuk:", draft.name);
         }
         
-        // If fail, just stop loading
+        // Kalau prediksi gagal, cukup hentikan loading state-nya
         setDrafts(current => current.map(d => 
           d.id === draft.id ? { ...d, isLoading: false } : d
         ));
@@ -227,7 +227,7 @@ export default function TambahTransaksiPage() {
   const updateDraft = (id: string, field: keyof DraftTransaction, value: any) => {
     setDrafts(prev => prev.map(draft => {
       if (draft.id === id) {
-        // Handle type change by auto-switching category if needed
+        // Saat tipe berubah, auto-ganti kategori yang sesuai jika diperlukan
         if (field === 'type') {
           const newCategory = value === 'pemasukan' ? INCOME_CATEGORIES[0] : EXPENSE_CATEGORIES[0];
           return { ...draft, [field]: value, category: newCategory };
@@ -252,7 +252,7 @@ export default function TambahTransaksiPage() {
       return;
     }
     
-    // Validation
+    // Validasi sebelum submit
     const invalid = drafts.find(d => d.amount <= 0 || !d.name);
     if (invalid) {
       setError("Beberapa transaksi memiliki jumlah atau nama yang tidak valid");
@@ -273,7 +273,7 @@ export default function TambahTransaksiPage() {
     setIsSubmitting(true);
     
     try {
-      // We will send them sequentially or parallel, let's do sequentially to be safe with DB
+      // Simpan semua draft secara berurutan agar error mudah dilacak
       for (const draft of drafts) {
         const combinedDateTimeString = `${draft.date}T${draft.time}:00`;
         
@@ -307,7 +307,7 @@ export default function TambahTransaksiPage() {
         }
       }
 
-      // Success, clear storage and redirect
+      // Berhasil disimpan, bersihkan storage dan arahkan ke dashboard
       setDrafts([]);
       setNaturalInput("");
       localStorage.removeItem("catatanku_manual_drafts");
@@ -324,9 +324,9 @@ export default function TambahTransaksiPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-20">
-      {/* Header Panel */}
+      {/* Panel Header */}
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-white shadow-md mb-2">
-        {/* Background & abstract shapes wrapper (with overflow-hidden) */}
+        {/* Background bentuk abstrak */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-dark rounded-3xl overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
           <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
@@ -343,7 +343,7 @@ export default function TambahTransaksiPage() {
             Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
           </p>
           
-          {/* Wallet Dropdown */}
+          {/* Pilihan Dompet */}
           <div className="relative z-20 w-full max-w-xs">
             <button 
               onClick={() => setIsWalletDropdownOpen(!isWalletDropdownOpen)}
@@ -380,7 +380,7 @@ export default function TambahTransaksiPage() {
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* Pesan Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-2xl text-sm font-medium flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
@@ -388,7 +388,7 @@ export default function TambahTransaksiPage() {
         </div>
       )}
 
-      {/* Premium Input Card */}
+      {/* Form Input Natural */}
       <div className="bg-white rounded-3xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all focus-within:shadow-[0_8px_40px_rgba(15,154,149,0.12)] focus-within:border-primary/30 group">
         <div className="relative bg-slate-50/70 rounded-2xl overflow-hidden border border-transparent group-focus-within:border-primary/10 transition-colors">
           <textarea
@@ -411,7 +411,7 @@ export default function TambahTransaksiPage() {
         </div>
       </div>
 
-      {/* Drafts List */}
+      {/* Daftar Draft Transaksi */}
       {drafts.length > 0 && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between px-2">
@@ -435,7 +435,7 @@ export default function TambahTransaksiPage() {
                 key={draft.id} 
                 className={`bg-white rounded-2xl border-l-4 ${draft.type === 'pemasukan' ? 'border-l-[#0f9a95] border-y border-r border-slate-100' : 'border-l-red-500 border-y border-r border-slate-100'} p-4 md:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-500`}
               >
-                {/* AI Loading State Overlay */}
+                {/* Overlay Loading AI */}
                 {draft.isLoading && (
                   <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center z-10 rounded-2xl">
                     <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100 flex items-center gap-2 text-primary font-medium text-sm animate-pulse">
@@ -445,7 +445,7 @@ export default function TambahTransaksiPage() {
                 )}
 
                 <div className="flex flex-col gap-4">
-                  {/* Top Row: Type & Delete */}
+                  {/* Baris Atas: Tipe & Hapus */}
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <div className="flex bg-slate-100 rounded-lg p-1">
                       <button
@@ -475,7 +475,7 @@ export default function TambahTransaksiPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Left Column: Name & Amount */}
+                    {/* Kolom Kiri: Nama & Nominal */}
                     <div className="flex-1 flex flex-col gap-3">
                       <div>
                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Catatan</label>
@@ -504,12 +504,12 @@ export default function TambahTransaksiPage() {
                       </div>
                     </div>
 
-                    {/* Right Column: Category, Date, Time */}
+                    {/* Kolom Kanan: Kategori, Tanggal, Jam */}
                     <div className="flex-1 flex flex-col gap-3">
                        <div>
                           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Kategori</label>
                           
-                          {/* Input Kategori dengan Datalist (Combobox) */}
+                          {/* Input Kategori (Combobox) */}
                           <div className="relative mt-1">
                             <input
                               type="text"
@@ -557,7 +557,7 @@ export default function TambahTransaksiPage() {
             ))}
           </div>
 
-          {/* Floating Premium Pill Action */}
+          {/* Tombol Simpan Melayang */}
           <div className="fixed bottom-6 left-0 right-0 lg:left-64 flex justify-center z-40 pointer-events-none px-4">
             <div className="bg-white/90 backdrop-blur-xl border border-slate-200/50 p-3 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex items-center justify-between gap-6 pointer-events-auto transform transition-all hover:-translate-y-1 w-full max-w-xl mx-auto">
               <div className="px-4 hidden sm:block">
@@ -579,7 +579,7 @@ export default function TambahTransaksiPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
+      {/* Modal Konfirmasi */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-xl relative animate-in zoom-in-95 duration-200">

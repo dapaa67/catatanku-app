@@ -19,11 +19,11 @@ export function WalletCard({ name, balance, color, imageUrl, isBalanceHidden, on
         backgroundImage: imageUrl ? `url(${imageUrl})` : undefined 
       }}
     >
-      {/* Dark overlay for readability if using image */}
+      {/* Overlay gelap agar teks terbaca jika pakai gambar */}
       {imageUrl && <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>}
 
       <div className="flex justify-between items-start relative z-10">
-        {/* Kiri Atas: Nama Dompet & Icon Pensil */}
+        {/* Pojok Kiri Atas: Nama & Ikon Edit */}
         <div className="flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
           <span className="text-sm font-medium">{name}</span>
           <button 
@@ -34,7 +34,7 @@ export function WalletCard({ name, balance, color, imageUrl, isBalanceHidden, on
           </button>
         </div>
 
-        {/* Kanan Atas: Icon Mata */}
+        {/* Pojok Kanan Atas: Ikon Tampil Saldo */}
         <button 
           onClick={onToggleHideBalance}
           className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors backdrop-blur-sm cursor-pointer"
@@ -43,7 +43,7 @@ export function WalletCard({ name, balance, color, imageUrl, isBalanceHidden, on
         </button>
       </div>
 
-      {/* Tengah: Saldo */}
+      {/* Bagian Tengah: Nominal Saldo */}
       <div className="flex-1 flex items-center justify-center mt-4 relative z-10">
         <h3 className="text-4xl sm:text-5xl font-bold tracking-tight text-center">
           {isBalanceHidden ? "Rp ••••••••" : new Intl.NumberFormat("id-ID", {

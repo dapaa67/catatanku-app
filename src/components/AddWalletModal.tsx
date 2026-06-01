@@ -17,7 +17,7 @@ interface AddWalletModalProps {
 }
 
 const PREDEFINED_COLORS = [
-  "#00A3B5", // Teal
+  "#00A3B5", // Tosca
   "#E53935", // Merah
   "#546E7A", // Biru-abu
   "#212121", // Hitam
@@ -33,7 +33,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Efek untuk mengisi form jika ada initialData (Edit Mode)
+  // Efek untuk mengisi form jika ada initialData (Mode Edit)
   useEffect(() => {
     if (initialData && isOpen) {
       setName(initialData.name);
@@ -69,7 +69,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
     onSave({
       name,
       balance: balance === "" ? 0 : Number(balance),
-      color: selectedColor || "#00A3B5", // Fallback teal
+      color: selectedColor || "#00A3B5", // Warna default tosca
       imageUrl: selectedImageUrl
     });
   };
@@ -78,12 +78,12 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-3xl p-6 shadow-xl w-full max-w-lg">
         
-        {/* Header Modal */}
+        {/* Bagian Header Modal */}
         <h2 className="text-xl font-bold text-primary text-center mb-6">
           {initialData ? 'Edit Tabungan' : 'Tambah Tabungan'}
         </h2>
         
-        {/* Form Body */}
+        {/* Bagian Form */}
         <div className="flex flex-col gap-5">
           {/* Input Nama */}
           <div>
@@ -97,7 +97,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
             />
           </div>
 
-          {/* Color Picker / Background Tema */}
+          {/* Pilihan Warna / Tema Background */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Background Tema</label>
             <div className="grid grid-cols-7 gap-3">
@@ -113,7 +113,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
                 />
               ))}
               
-              {/* Custom Image Button */}
+              {/* Tombol Upload Gambar Sendiri */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 hover:text-primary hover:border-primary transition-all overflow-hidden ${selectedImageUrl ? 'ring-2 ring-offset-2 ring-primary scale-110 border-solid border-transparent' : ''}`}
@@ -126,7 +126,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
               </button>
             </div>
             
-            {/* Hidden File Input */}
+            {/* Input File Tersembunyi */}
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -153,7 +153,7 @@ export function AddWalletModal({ isOpen, onClose, onSave, initialData }: AddWall
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* Tombol Aksi Bawah */}
         <div className="flex gap-4 mt-8">
           <button 
             onClick={onClose}

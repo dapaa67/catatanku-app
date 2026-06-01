@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     }, { status: 201 })
 
   } catch (error: unknown) {
-    console.error("Error creating savings goal:", error)
+    console.error("Error membuat target tabungan:", error)
     return NextResponse.json({ error: "Gagal membuat tabungan" }, { status: 500 })
   }
 }
@@ -99,7 +99,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "ID Tabungan tidak valid" }, { status: 400 })
     }
 
-    // Verify ownership
+    // Pastikan user memiliki tabungan tersebut
     const goals = await prisma.savingsGoal.findMany({
       where: { id: { in: goalIds }, userId: user.id }
     })
@@ -120,7 +120,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ message: "Berhasil menghapus tabungan yang dipilih" })
   } catch (error: unknown) {
-    console.error("Bulk delete savings error:", error)
+    console.error("Error hapus tabungan massal:", error)
     return NextResponse.json({ error: "Gagal menghapus tabungan massal" }, { status: 500 })
   }
 }

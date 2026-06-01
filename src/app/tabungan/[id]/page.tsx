@@ -115,7 +115,7 @@ export default function TabunganDetailPage() {
 
   return (
     <div className="flex flex-col w-full pb-20 text-slate-800">
-      {/* Header */}
+      {/* Bagian Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4 flex-1">
           <Link href="/tabungan" className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
@@ -132,9 +132,9 @@ export default function TabunganDetailPage() {
         </button>
       </div>
 
-      {/* Main Info Card */}
+      {/* Kartu Info Utama */}
       <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 md:gap-8 mb-6">
-        {/* Photo */}
+        {/* Foto */}
         <div className="w-full md:w-64 h-48 md:h-auto rounded-2xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
           {goal.photoUrl ? (
             <img src={goal.photoUrl} alt={goal.name} className="w-full h-full object-cover" />
@@ -212,7 +212,7 @@ export default function TabunganDetailPage() {
         </div>
       </div>
 
-      {/* Riwayat Pengisian */}
+      {/* Histori Setoran */}
       <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-8 shadow-sm mb-6 flex flex-col">
         <div className="flex justify-between items-center mb-6 shrink-0">
           <h3 className="font-bold text-slate-800">Riwayat Pengisian</h3>
@@ -242,7 +242,7 @@ export default function TabunganDetailPage() {
         </div>
       </div>
 
-      {/* Floating Action Button */}
+      {/* Tombol Aksi Melayang */}
       <button 
         onClick={() => setIsTopUpOpen(true)}
         className="fixed bottom-8 right-8 w-14 h-14 bg-white border-2 border-primary/40 rounded-full flex items-center justify-center shadow-lg hover:bg-primary/5 hover:scale-105 transition-all cursor-pointer z-50"
@@ -256,7 +256,7 @@ export default function TabunganDetailPage() {
         onClose={() => setIsTopUpOpen(false)}
         onSuccess={() => {
           fetchDetail(true);
-          // Optionally show a toast here
+          // bisa tambahkan notifikasi di sini kalau diperlukan
         }}
         goalId={id}
         defaultAmount={goal.planAmount ? Number(goal.planAmount) : undefined}

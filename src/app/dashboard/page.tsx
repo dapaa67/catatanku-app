@@ -81,7 +81,7 @@ export default function DashboardPage() {
   const [chartType, setChartType] = useState<"income" | "expense">("expense");
   const [userName, setUserName] = useState<string>("Loading...");
 
-  // ── Fetch wallets & summary dari API ──────────────────────
+  // Fetch data dompet dan ringkasan keuangan dari API
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -105,7 +105,7 @@ export default function DashboardPage() {
       setSummary(summaryJson.data as SummaryData);
       setRecentTransactions((transactionsJson.data || []).slice(0, 4));
 
-      // Fetch user
+      // Ambil nama user dari Supabase
       const supabase = createBrowserClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -124,11 +124,11 @@ export default function DashboardPage() {
     fetchData();
   }, [fetchData]);
 
-  // ── Ambil data dompet aktif ────────────────────────────────
+  // Ambil dompet yang sedang aktif
   const activeWallet = wallets.find((w) => w.id === activeWalletId) || wallets[0];
   const totalBalance = summary?.totalBalance ?? wallets.reduce((acc, w) => acc + w.balance, 0);
 
-  // ── Save / Edit Dompet ─────────────────────────────────────
+  // Handler simpan dan edit dompet
   const handleSaveWallet = async (data: NewWalletData) => {
     try {
       if (walletToEdit) {
@@ -163,7 +163,7 @@ export default function DashboardPage() {
     }
   };
 
-  // ── Hapus Dompet ───────────────────────────────────────────
+  // Handler hapus dompet
   const handleDeleteWallet = async (walletId: string) => {
     try {
       const res = await fetch(`/api/wallets/${walletId}`, { method: "DELETE" });
@@ -179,7 +179,7 @@ export default function DashboardPage() {
     }
   };
 
-  // ── Transfer Saldo ──────────────────────────────────────────
+  // Handler transfer saldo antar dompet
   const handleTransferWallet = async (fromId: string, toId: string, amount: number) => {
     try {
       const res = await fetch("/api/wallets/transfer", {
@@ -198,12 +198,12 @@ export default function DashboardPage() {
   };
 
   // ============================================================
-  // Render
+  // Render halaman utama
   // ============================================================
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
 
-      {/* Error state */}
+      {/* Tampilan Error */}
       {error && (
         <div className="rounded-2xl bg-red-50 border border-red-200 px-5 py-4 text-red-600 text-sm font-medium">
           ⚠️ {error}
@@ -216,7 +216,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Total Saldo */}
+      {/* Kartu Informasi Atas */}
       <div>
         <p className="text-xs font-medium text-slate-500 mb-0.5">Jumlah Saldo</p>
         {isLoading ? (
@@ -277,9 +277,9 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Main Content Grid */}
+      {/* Grid Konten Utama */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-2">
-        {/* Left Column: Laporan bulan ini */}
+        {/* Kolom: Laporan bulan ini */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-slate-800 text-sm">Laporan bulan ini</h3>
@@ -308,7 +308,7 @@ export default function DashboardPage() {
               </button>
             </div>
             
-            {/* Chart Graphic Area */}
+            {/* Area Grafik */}
             <div className="relative h-40 w-full mt-2">
               {(() => {
                 const maxVal = summary?.trendLast6Months?.reduce((max, t) => Math.max(max, chartType === "expense" ? t.expense : t.income), 0) || 100000;
@@ -334,7 +334,7 @@ export default function DashboardPage() {
 
                 return (
                   <>
-                    {/* Y Axis Labels */}
+                    {/* Label Sumbu Y */}
                     <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between text-[10px] font-bold text-slate-400 pb-5 items-end">
                       <span>{formatY(maxVal)}</span>
                       <span>{formatY(maxVal * 0.66)}</span>
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                       <span>0</span>
                     </div>
                     
-                    {/* Grid Lines */}
+                    {/* Garis Grid */}
                     <div className="absolute inset-0 right-10 flex flex-col justify-between pb-5">
                       <div className="border-t border-dashed border-slate-200 w-full"></div>
                       <div className="border-t border-dashed border-slate-200 w-full"></div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                       <div className="border-t border-dashed border-slate-200 w-full"></div>
                     </div>
                     
-                    {/* Chart Line Representation */}
+                    {/* Visualisasi Garis Grafik */}
                     <div className="absolute inset-0 right-10 pb-5">
                       <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                         <path d={pathD} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" />
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                       </svg>
-                      {/* Tooltip */}
+                      {/* Tooltip Nilai Terakhir */}
                       <div className="absolute top-0 right-0 bg-white border border-slate-200 shadow-md rounded-md px-2 py-1 flex flex-col items-center translate-x-4 -translate-y-4">
                         <span className="text-xs font-bold text-slate-800 leading-tight">
                           {new Intl.NumberFormat("id-ID").format(lastVal)}
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* X Axis Labels */}
+                    {/* Label Sumbu X */}
                     <div className="absolute bottom-0 left-0 right-10 flex justify-between text-[10px] font-bold text-slate-400">
                       <span>{firstLabel}</span>
                       <span>{lastLabel}</span>
@@ -381,7 +381,7 @@ export default function DashboardPage() {
               })()}
             </div>
 
-            {/* Legend */}
+            {/* Keterangan Grafik */}
             <div className="flex items-center justify-center gap-6 mt-2">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${chartType === "income" ? "bg-green-500" : "bg-red-500"}`}></div>
@@ -391,7 +391,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Kategori terbesar */}
+        {/* Kolom Kanan: Kategori terbesar */}
         <div className="flex flex-col gap-3">
           <h3 className="font-bold text-slate-800 text-sm">Kategori terbesar</h3>
           
@@ -417,7 +417,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Section: Transaksi terakhir */}
+      {/* Bagian Bawah: Transaksi Terakhir */}
       <div className="bg-white border border-primary/20 rounded-3xl p-6 shadow-sm flex flex-col gap-4 mt-2">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-bold text-slate-800 text-sm">Transaksi terakhir</h3>

@@ -111,15 +111,15 @@ export default function TabunganPage() {
 
   return (
     <div className="flex flex-col w-full pb-20 text-slate-800">
-      {/* Header */}
+      {/* Bagian Header */}
       <div className="mb-4 sm:mb-8">
         <h1 className="text-2xl font-bold mb-1 text-slate-800">Tabungan</h1>
         <p className="text-sm font-medium text-slate-500">Kelola target tabunganmu</p>
       </div>
 
-      {/* Top Cards */}
+      {/* Kartu Informasi Atas */}
       <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-8">
-        {/* Total Target */}
+        {/* Target Total */}
         <div className="bg-white border border-primary/30 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm flex flex-col justify-center">
           <span className="text-[11px] sm:text-sm font-bold text-slate-800 mb-1 sm:mb-3 truncate">
             <span className="sm:hidden">Target</span>
@@ -137,7 +137,7 @@ export default function TabunganPage() {
           <h2 className="text-[13px] sm:text-3xl font-bold text-slate-800 truncate">{isLoading ? "..." : formatRupiah(totalTerkumpul)}</h2>
         </div>
 
-        {/* Progress Rata-rata */}
+        {/* Rata-rata Progres */}
         <div className="bg-white border border-primary/30 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm flex flex-col justify-center">
           <span className="text-[11px] sm:text-sm font-bold text-slate-800 mb-1 sm:mb-3 truncate">
             <span className="sm:hidden">Progress</span>
@@ -202,7 +202,7 @@ export default function TabunganPage() {
           </button>
         </div>
 
-        {/* Bulk Action Controls */}
+        {/* Kontrol Aksi Massal */}
         <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-full px-4 py-2 shadow-sm">
           <div 
             onClick={() => {
@@ -238,7 +238,7 @@ export default function TabunganPage() {
         </div>
       </div>
 
-      {/* List */}
+      {/* Daftar Tabungan */}
       <div className="flex flex-col gap-6 relative">
         {isLoading ? (
           <div className="flex justify-center p-8"><span className="text-slate-500">Memuat tabungan...</span></div>
@@ -246,7 +246,7 @@ export default function TabunganPage() {
           sortedTabungan.map((item) => (
             <Link href={`/tabungan/${item.id}`} key={item.id} className={`bg-white border rounded-[2rem] p-4 sm:p-6 shadow-sm flex items-center gap-3 sm:gap-6 relative hover:shadow-md transition-all cursor-pointer ${selectedIds.includes(item.id) ? 'border-primary/50 ring-2 ring-primary/20' : 'border-primary/30'}`}>
               
-              {/* Checkbox */}
+              {/* Kotak Centang */}
               <div 
                 onClick={(e) => {
                   e.preventDefault();
@@ -266,12 +266,12 @@ export default function TabunganPage() {
                 )}
               </div>
               
-              {/* Absolute % text */}
+              {/* Teks Persentase */}
               <div className="absolute top-4 sm:top-6 right-5 sm:right-6 font-bold text-slate-800 text-xs sm:text-sm bg-slate-100 sm:bg-transparent px-2 sm:px-0 py-0.5 sm:py-0 rounded-full sm:rounded-none">
                 {item.progressPercent}%
               </div>
 
-              {/* Photo Box */}
+              {/* Kotak Gambar */}
               <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0 overflow-hidden">
                 {item.photoUrl ? (
                   <img src={item.photoUrl} alt={item.name} className="w-full h-full object-cover" />
@@ -287,7 +287,7 @@ export default function TabunganPage() {
                   {formatRupiah(Number(item.currentAmount))} / {formatRupiah(Number(item.targetAmount))}
                 </p>
                 
-                {/* Progress Bar */}
+                {/* Bar Progres */}
                 <div className="w-full h-1.5 bg-slate-600 rounded-full overflow-hidden mb-2 sm:mb-3">
                   <div 
                     className="h-full bg-primary/80 rounded-full transition-all duration-500" 
@@ -309,7 +309,7 @@ export default function TabunganPage() {
         )}
       </div>
 
-      {/* Floating Action Button */}
+      {/* Tombol Aksi Melayang */}
       <button 
         onClick={() => setIsModalOpen(true)}
         className="fixed bottom-8 right-8 w-14 h-14 bg-white border-2 border-primary/40 rounded-full flex items-center justify-center shadow-lg hover:bg-primary/5 hover:scale-105 transition-all cursor-pointer z-50"

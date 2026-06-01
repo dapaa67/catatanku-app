@@ -32,7 +32,7 @@ export default function AuthLeftPanel() {
   return (
     <div className="hidden lg:flex w-[45%] h-screen bg-primary flex-col justify-center items-center py-10 px-8 relative flex-shrink-0">
       
-      {/* Container utama untuk mengatur batas maksimal lebar konten */}
+      {/* Wadah utama pembatas lebar konten */}
       <div className="w-full max-w-[460px] flex flex-col items-center">
         
         {/* Logo */}
@@ -43,7 +43,7 @@ export default function AuthLeftPanel() {
           <span className="text-white text-[15px] font-semibold tracking-wide">Catatanku</span>
         </div>
 
-        {/* Card Putih (Proporsional & Presisi) */}
+        {/* Kartu Putih Utama */}
         <div className="bg-white rounded-3xl w-full aspect-[16/10] max-h-[280px] shadow-xl relative overflow-hidden flex items-center p-8 mb-14">
           
           {/* Teks Kiri */}
@@ -56,7 +56,7 @@ export default function AuthLeftPanel() {
             </p>
           </div>
           
-          {/* Ilustrasi Kanan (Absolute biar gampang posisinya) */}
+          {/* Ilustrasi Hiasan Kanan */}
           <div className="absolute right-0 bottom-4 w-[180px] h-[180px]">
             <Image
               src="/wallet-illustration.png"
@@ -78,7 +78,7 @@ export default function AuthLeftPanel() {
           </p>
         </div>
 
-        {/* Dots Navigasi */}
+        {/* Navigasi Titik */}
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => setActiveSlide((s) => Math.max(0, s - 1))}

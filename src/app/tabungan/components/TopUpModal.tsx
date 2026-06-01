@@ -62,7 +62,7 @@ export default function TopUpModal({ isOpen, onClose, onSuccess, goalId, default
         setPredictionResult(prediction);
         setSuccessMessage(json.message || "Berhasil disetor!");
         if (onSuccess) onSuccess();
-        // Do not close immediately, wait for user to click OK on prediction view
+        // Jangan langsung tutup modal, tunggu user klik OK di tampilan prediksi
       } else {
         if (onSuccess) onSuccess();
         handleClose();

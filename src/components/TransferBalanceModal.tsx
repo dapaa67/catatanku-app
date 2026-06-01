@@ -71,7 +71,7 @@ export function TransferBalanceModal({ isOpen, onClose, wallets, onTransfer }: T
         <h2 className="text-xl font-bold text-primary text-center mb-6">Pindah Saldo</h2>
 
         <div className="flex flex-col gap-4">
-          {/* Dari */}
+          {/* Dari Dompet */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Dari</label>
             <select 
@@ -99,7 +99,7 @@ export function TransferBalanceModal({ isOpen, onClose, wallets, onTransfer }: T
             </div>
           </div>
 
-          {/* Ke */}
+          {/* Ke Dompet */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Ke</label>
             <select 
@@ -114,7 +114,7 @@ export function TransferBalanceModal({ isOpen, onClose, wallets, onTransfer }: T
             </select>
           </div>
 
-          {/* Jumlah */}
+          {/* Jumlah Saldo */}
           <div className="mt-2">
             <label className="block text-sm font-semibold text-slate-700 mb-2">Nominal Transfer</label>
             <div className="relative">
@@ -140,7 +140,7 @@ export function TransferBalanceModal({ isOpen, onClose, wallets, onTransfer }: T
           {error && <p className="text-red-500 text-sm font-medium text-center bg-red-50 p-2 rounded-lg">{error}</p>}
         </div>
 
-        {/* Footer Actions */}
+        {/* Tombol Aksi Bawah */}
         <div className="flex gap-4 mt-8">
           <button 
             onClick={onClose}

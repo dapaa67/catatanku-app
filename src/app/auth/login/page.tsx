@@ -51,7 +51,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
         <div className="w-full max-w-[400px] my-auto flex-shrink-0">
 
-          {/* Logo mobile */}
+          {/* Logo Mobile */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
@@ -70,7 +70,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error Banner */}
+          {/* Banner Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">
               ⚠️ {error}
@@ -121,7 +121,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Ingat saya + Lupa Kata Sandi */}
+            {/* Ingat Saya & Lupa Kata Sandi */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input

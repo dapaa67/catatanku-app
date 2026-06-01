@@ -144,7 +144,7 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
         planType: rencana.toUpperCase(),
         planAmount: rawPlan ? Number(rawPlan) : null,
         deadline: calculatedDeadline,
-        photoUrl: photoPreview // Send the base64 string
+        photoUrl: photoPreview // kirim string base64 foto
       };
 
       const res = await fetch("/api/savings", {
@@ -183,7 +183,7 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
           <div className="flex flex-col animate-in fade-in zoom-in duration-200">
             <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Tambah Tabungan</h2>
             
-            {/* Error Message */}
+            {/* Pesan Error */}
             {errorMsg && (
               <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-medium mb-6 animate-in fade-in slide-in-from-top-2">
                 {errorMsg}
@@ -267,7 +267,7 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
             </div>
 
 
-            {/* Actions */}
+            {/* Tombol Aksi */}
             <div className="flex justify-center gap-4">
               <button 
                 onClick={onClose}
@@ -284,7 +284,7 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
               </button>
             </div>
 
-            {/* Estimasi Popup */}
+            {/* Popup Perkiraan */}
             {showEstimasiModal && estimasiData && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 rounded-[2rem] animate-in fade-in duration-200">
                 <div className="bg-white rounded-[2rem] p-6 w-[85%] shadow-2xl relative">
@@ -338,7 +338,7 @@ export default function TambahTabunganModal({ isOpen, onClose, onSuccess }: Tamb
               Hitung Rencana Pengisian
             </button>
 
-            {/* Results */}
+            {/* Hasil Perkiraan */}
             <div className="flex flex-col">
               <p className="text-xs font-bold text-slate-500 mb-4">Target : 100.000.000 - 31 Oktober 2026 (183 Hari)</p>
               

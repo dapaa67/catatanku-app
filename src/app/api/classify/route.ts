@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Deskripsi transaksi tidak valid" }, { status: 400 });
     }
 
-    // Call custom FastAPI backend
+    // Panggil API FastAPI untuk klasifikasi kategori
     const response = await fetch("https://yobby15-catatanku-fastapi.hf.space/api/predict/kategori", {
       method: "POST",
       headers: {
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json(parsedData);
 
   } catch (error: any) {
-    console.error("Custom AI Classify Error:", error);
+    console.error("Error Klasifikasi AI:", error);
     return NextResponse.json(
       { error: "Gagal mengklasifikasi transaksi: " + error.message },
       { status: 500 }

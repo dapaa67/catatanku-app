@@ -78,7 +78,7 @@ Tugas Anda:
     return NextResponse.json(parsedData);
 
   } catch (error: unknown) {
-    console.error("Gemini Scan Error:", error);
+    console.error("Error Scan Gemini:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       { error: "Gagal memproses gambar: " + message },

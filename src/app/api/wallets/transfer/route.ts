@@ -25,33 +25,32 @@ export async function POST(req: NextRequest) {
   try {
     // Jalankan transaksi database (all-or-nothing)
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Cek dompet asal
+      // Cek dompet asal
       const fromWallet = await tx.wallet.findFirst({
         where: { id: fromWalletId, userId: user.id }
       });
       if (!fromWallet) throw new Error("Dompet asal tidak ditemukan");
       if (Number(fromWallet.balance) < transferAmount) throw new Error("Saldo tidak mencukupi");
 
-      // 2. Cek dompet tujuan
+      // Cek dompet tujuan
       const toWallet = await tx.wallet.findFirst({
         where: { id: toWalletId, userId: user.id }
       });
       if (!toWallet) throw new Error("Dompet tujuan tidak ditemukan");
 
-      // 3. Kurangi saldo asal
+      // Kurangi saldo asal
       const updatedFrom = await tx.wallet.update({
         where: { id: fromWalletId },
         data: { balance: { decrement: transferAmount } }
       });
 
-      // 4. Tambah saldo tujuan
+      // Tambah saldo tujuan
       const updatedTo = await tx.wallet.update({
         where: { id: toWalletId },
         data: { balance: { increment: transferAmount } }
       });
 
-      // Opsional: Catat transaksi ini di tabel Transaction sebagai histori transfer
-      // Karena belum ada enum untuk transfer, kita catat sebagai Expense di asal dan Income di tujuan, atau abaikan saja dulu
+      // Catat transaksi ini di tabel Transaction sebagai histori transfer (sementara sebagai Expense dan Income)
       
       return { updatedFrom, updatedTo };
     });

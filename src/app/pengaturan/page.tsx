@@ -36,14 +36,14 @@ const PasswordInput = ({
 export default function PengaturanPage() {
   const router = useRouter();
 
-  // --- Profil State ---
+  // Variabel profil
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // --- Password State ---
+  // Variabel password
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -71,7 +71,7 @@ export default function PengaturanPage() {
     fetchUser();
   }, []);
 
-  // ── Handler: Simpan Profil ──
+  // Handler untuk menyimpan perubahan profil
   const handleSaveProfil = async () => {
     if (!name.trim()) {
       setProfileMsg({ type: "error", text: "Nama tidak boleh kosong" });
@@ -92,7 +92,7 @@ export default function PengaturanPage() {
     }
   };
 
-  // ── Handler: Ganti Password ──
+  // Handler untuk mengubah password akun
   const handleChangePassword = async () => {
     setPasswordMsg(null);
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -152,7 +152,7 @@ export default function PengaturanPage() {
 
   return (
     <div className="w-full pb-12 px-4 lg:pl-0 lg:pr-8">
-      {/* Header */}
+      {/* Bagian Atas */}
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-slate-800">Pengaturan</h1>
         <p className="text-sm md:text-base text-slate-500 font-medium">Kelola preferensi dan keamanan akun Anda</p>
@@ -160,7 +160,7 @@ export default function PengaturanPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-8">
         
-        {/* Kolom Kiri: Navigasi / Info Singkat */}
+        {/* Kolom Kiri: Navigasi Profil */}
         <div className="lg:col-span-1 flex flex-col gap-4 sticky top-6 self-start">
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-3xl border border-primary/10">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary font-bold text-xl mb-4 shadow-sm">
@@ -189,10 +189,10 @@ export default function PengaturanPage() {
           </div>
         </div>
 
-        {/* Kolom Kanan: Form Pengaturan */}
+        {/* Kolom Kanan: Form */}
         <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8">
           
-          {/* ── SECTION 1: Profil ── */}
+          {/* Form profil pengguna */}
           <div id="profil-section" className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm scroll-mt-6">
             <h2 className="text-base md:text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
               <User className="w-5 h-5 text-primary" /> Profil Saya
@@ -247,7 +247,7 @@ export default function PengaturanPage() {
             </div>
           </div>
 
-          {/* ── SECTION 2: Keamanan ── */}
+          {/* Form keamanan akun */}
           <div id="keamanan-section" className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm scroll-mt-6">
             <h2 className="text-base md:text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
               <Lock className="w-5 h-5 text-primary" /> Keamanan Akun

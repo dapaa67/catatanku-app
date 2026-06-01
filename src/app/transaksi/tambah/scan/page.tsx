@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Image as ImageIcon, Receipt, UploadCloud, ShieldCheck, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 
-// Helper to generate UUID
+// Helper untuk generate ID unik per item draft
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export default function ScanStrukPage() {
@@ -21,7 +21,7 @@ export default function ScanStrukPage() {
     if (!file) return;
     
     await processImage(file);
-    // Reset input value so same file can be selected again
+    // Reset agar file yang sama bisa dipilih ulang
     e.target.value = '';
   };
 
@@ -33,13 +33,13 @@ export default function ScanStrukPage() {
     }
   };
 
-  // Helper: convert File to base64 string (browser-native, no Buffer needed)
+  // Konversi file gambar ke base64 menggunakan FileReader bawaan browser
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // result is "data:image/jpeg;base64,XXXXX" — we only want the base64 part
+        // Hasilnya berupa "data:image/jpeg;base64,XXXXX" — ambil bagian base64-nya saja
         const base64 = result.split(',')[1];
         resolve(base64);
       };
@@ -54,12 +54,11 @@ export default function ScanStrukPage() {
     setError(null);
     
     try {
-      // 1. Convert image to base64 (browser-native, tanpa Buffer)
+      // Konversi gambar ke base64
       const base64Str = await fileToBase64(file);
       const mimeType = file.type;
 
-      // 2. Call backend Gemini API
-      // Since it's server processing, just set progress to 50% immediately to show it's working
+      // Kirim ke backend untuk diproses Gemini — set progress ke 50% supaya user tidak bingung
       setProgress(50);
       
       const response = await fetch('/api/scan-receipt', {
@@ -90,7 +89,7 @@ export default function ScanStrukPage() {
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
       
-      // 3. Buat Draft Transaksi (Multiple)
+      // Buat draft transaksi dari setiap item yang terdeteksi di struk
       let newDrafts = parsedItems.map((item: { name: string, amount: number }) => ({
         id: generateId(),
         originalInput: `Scan struk: ${item.name} Rp ${item.amount}`,
@@ -104,7 +103,7 @@ export default function ScanStrukPage() {
         isLoading: false,
       }));
 
-      // 3.5. AI Category Prediction
+      // Prediksi kategori tiap item menggunakan AI
       await Promise.all(
         newDrafts.map(async (draft: any) => {
           try {
@@ -128,7 +127,7 @@ export default function ScanStrukPage() {
         })
       );
       
-      // 4. Simpan ke Local Storage Manual Drafts
+      // Gabungkan dengan draft yang sudah ada di local storage
       const savedStr = localStorage.getItem("catatanku_manual_drafts");
       let drafts: any[] = [];
       if (savedStr) {
@@ -138,7 +137,7 @@ export default function ScanStrukPage() {
       drafts.push(...newDrafts);
       localStorage.setItem("catatanku_manual_drafts", JSON.stringify(drafts));
       
-      // 5. Redirect
+      // Redirect ke halaman review draft
       router.push("/transaksi/tambah/manual");
       
     } catch (err) {
@@ -151,7 +150,7 @@ export default function ScanStrukPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-10">
-      {/* File Inputs (Hidden) */}
+      {/* Input File Tersembunyi */}
       <input 
         type="file" 
         accept="image/*" 
@@ -168,9 +167,9 @@ export default function ScanStrukPage() {
         onChange={handleFileChange} 
       />
 
-      {/* Header Panel */}
+      {/* Bagian Atas */}
       <div className="rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-white relative shadow-md bg-gradient-to-r from-primary to-primary-dark overflow-hidden">
-        {/* Abstract background shapes */}
+        {/* Latar Belakang Abstrak */}
         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
         
@@ -187,10 +186,10 @@ export default function ScanStrukPage() {
         </div>
       </div>
 
-      {/* Main Content Split */}
+      {/* Pembagian Konten Utama */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
-        {/* Upload Area */}
+        {/* Area Upload Gambar */}
         <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200 p-5 md:p-8 shadow-sm flex flex-col min-h-[350px] md:min-h-[400px]">
           <h2 className="text-sm font-semibold text-slate-800 mb-6 uppercase tracking-wider">Area Upload</h2>
           
@@ -242,7 +241,7 @@ export default function ScanStrukPage() {
           </div>
         </div>
 
-        {/* Tips Area */}
+        {/* Area Tips */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="bg-white rounded-3xl border border-slate-200 p-5 md:p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
@@ -277,7 +276,7 @@ export default function ScanStrukPage() {
             </ul>
           </div>
           
-          {/* Info Card - Simplified */}
+          {/* Kartu Info Pendek */}
           <div className="bg-slate-50 rounded-3xl border border-slate-200 p-6 flex items-start gap-4 shadow-sm mt-auto">
             <div className="bg-white p-2.5 rounded-xl text-teal-600 shadow-sm border border-slate-100 flex-shrink-0">
               <ShieldCheck className="w-5 h-5" />
@@ -297,7 +296,7 @@ export default function ScanStrukPage() {
 
       </div>
 
-      {/* Error Modal */}
+      {/* Modal Pesan Error */}
       {error && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-xl relative animate-in zoom-in-95 duration-200 text-center">

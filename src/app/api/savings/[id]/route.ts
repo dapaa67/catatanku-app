@@ -26,6 +26,7 @@ export async function GET(
   return NextResponse.json({
     data: {
       ...goal,
+      // Verifikasi kepemilikan tabungan
       progressPercent: Number(goal.targetAmount) > 0
         ? Math.round((Number(goal.currentAmount) / Number(goal.targetAmount)) * 100)
         : 0,

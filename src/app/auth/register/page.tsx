@@ -65,7 +65,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
         <div className="w-full max-w-[400px] my-auto flex-shrink-0">
 
-          {/* Logo mobile */}
+          {/* Logo Mobile */}
           <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
@@ -73,7 +73,7 @@ export default function RegisterPage() {
             <span className="text-primary text-2xl font-bold italic tracking-wide">CatatanKu</span>
           </div>
 
-          {/* Success state */}
+          {/* Tampilan Berhasil */}
           {success ? (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -105,7 +105,7 @@ export default function RegisterPage() {
                 </p>
               </div>
 
-              {/* Error Banner */}
+              {/* Banner Error */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">
                   ⚠️ {error}

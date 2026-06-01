@@ -72,7 +72,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Top Header (Hanya muncul di HP) */}
+      {/* Header Atas di HP */}
       <div className="lg:hidden flex items-center justify-between bg-primary p-4 text-white sticky top-0 z-40 shadow-sm w-full">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="bg-white p-1.5 rounded-lg">
@@ -97,13 +97,13 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar Utama */}
+      {/* Navigasi Utama */}
       <aside className={`
         fixed lg:sticky top-0 left-0 h-screen overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 py-6 z-50 transition-transform duration-300 ease-in-out flex-shrink-0
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         
-        {/* Header Logo (Desktop) & Close Button (Mobile) */}
+        {/* Logo dan Tombol Tutup */}
         <div className="flex items-center justify-between px-2 mb-10">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="bg-white p-1.5 rounded-lg">
@@ -115,7 +115,7 @@ export default function Sidebar() {
           </Link>
         </div>
 
-      {/* Nav Items */}
+      {/* Daftar Menu */}
       <nav className="flex flex-col gap-2 flex-1">
         {navItems.map(({ label, href, icon: Icon }) => {
           // Khusus untuk Tambah Transaksi yang sekarang punya submenu
@@ -138,7 +138,7 @@ export default function Sidebar() {
                   </div>
                 </button>
                 
-                {/* Submenu */}
+                {/* Sub Menu */}
                 <div className={`flex flex-col pl-12 gap-1 mt-1 overflow-hidden transition-all duration-300 ease-in-out ${isTambahOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
                   <Link
                     href="/transaksi/tambah/manual"
@@ -184,7 +184,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer User: Disesuaikan biar gelap kayak Figma */}
+      {/* Profil Pengguna Bawah */}
       <div className="flex items-center justify-between px-2 pt-6 border-t border-white/10">
         <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-primary font-bold uppercase shrink-0">

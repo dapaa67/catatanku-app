@@ -146,7 +146,7 @@ export async function DELETE(req: NextRequest) {
     })
 
   } catch (error: unknown) {
-    console.error("Bulk Delete Error:", error)
+    console.error("Error Hapus Massal:", error)
     return NextResponse.json({ error: "Gagal menghapus transaksi" }, { status: 500 })
   }
 }
