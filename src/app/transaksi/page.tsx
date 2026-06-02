@@ -58,11 +58,10 @@ export default function RiwayatTransaksiPage() {
     try {
       const params = new URLSearchParams();
       if (activeWalletId !== "Semua") params.append("walletId", activeWalletId);
-      if (activeTab === "Pemasukan") params.append("type", "INCOME");
-      if (activeTab === "Pengeluaran") params.append("type", "EXPENSE");
-      if (activeCategory !== "Semua kategori") params.append("category", activeCategory);
 
-      const res = await fetch(`/api/transactions?${params.toString()}`);
+      const res = await fetch(`/api/transactions?${params.toString()}`, {
+        cache: 'no-store'
+      });
       if (res.ok) {
         const json = await res.json();
         setTransactions(json.data);
@@ -72,7 +71,7 @@ export default function RiwayatTransaksiPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeWalletId, activeTab, activeCategory]);
+  }, [activeWalletId]);
 
   useEffect(() => {
     fetchWallets();
@@ -83,6 +82,11 @@ export default function RiwayatTransaksiPage() {
     // Reset pilihan saat filter berubah
     setSelectedIds([]);
   }, [fetchTransactions]);
+
+  // Reset kategori ke "Semua kategori" setiap kali pindah tab Tipe Transaksi
+  useEffect(() => {
+    setActiveCategory("Semua kategori");
+  }, [activeTab]);
 
   const toggleSelection = (id: string) => {
     setSelectedIds(prev => 
@@ -134,9 +138,24 @@ export default function RiwayatTransaksiPage() {
   };
 
   const filteredTransactions = transactions.filter(t => {
+    // 1. Filter by Tab Tipe (Pemasukan / Pengeluaran)
+    if (activeTab === "Pemasukan" && t.type !== "INCOME") return false;
+    if (activeTab === "Pengeluaran" && t.type !== "EXPENSE") return false;
+
+    // 2. Filter by Category
+    if (activeCategory !== "Semua kategori") {
+      // Normalisasi string (hilangkan strip, underscore, dan spasi berlebih) agar "Lain-lain" cocok dengan "LAIN_LAIN"
+      const dbCat = t.category.toLowerCase().replace(/[-_]/g, ' ').trim();
+      const uiCat = activeCategory.toLowerCase().replace(/[-_]/g, ' ').trim();
+      if (dbCat !== uiCat) return false;
+    }
+
+    // 3. Filter by Search Query
     const matchSearch = t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                         t.category.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchSearch) return false;
     
+    // 4. Filter by Date
     let matchTime = true;
     if (startDate || endDate) {
       const tDate = new Date(t.date);
@@ -154,7 +173,7 @@ export default function RiwayatTransaksiPage() {
       }
     }
     
-    return matchSearch && matchTime;
+    return matchTime;
   });
 
   const groupedTransactions = filteredTransactions.reduce((groups, t) => {
@@ -169,7 +188,18 @@ export default function RiwayatTransaksiPage() {
 
   const transactionGroups = Object.values(groupedTransactions).sort((a, b) => new Date(b.items[0].date).getTime() - new Date(a.items[0].date).getTime());
 
-  const categories = ["Semua kategori", "Makanan", "Transportasi", "Hiburan", "Tagihan", "Gaji", "Investasi", "Lainnya"];
+  const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Kesehatan", "Hiburan", "Lain-lain"];
+  const INCOME_CATEGORIES = ["Pendapatan", "Investasi", "Lain-lain"];
+
+  const getActiveCategories = () => {
+    let baseCategories = activeTab === "Pemasukan" ? INCOME_CATEGORIES : 
+                         activeTab === "Pengeluaran" ? EXPENSE_CATEGORIES : 
+                         Array.from(new Set([...INCOME_CATEGORIES, ...EXPENSE_CATEGORIES]));
+
+    return ["Semua kategori", ...baseCategories];
+  };
+
+  const categories = getActiveCategories();
   const tabs = ["Semua", "Pemasukan", "Pengeluaran"];
 
   return (
@@ -263,10 +293,10 @@ export default function RiwayatTransaksiPage() {
         </div>
 
         {/* Sidebar filter di kiri */}
-        <div className={`lg:col-span-1 flex-col gap-6 sticky top-6 self-start ${isMobileFilterOpen ? "flex" : "hidden lg:flex"}`}>
+        <div className={`lg:col-span-1 flex-col gap-6 sticky top-6 ${isMobileFilterOpen ? "flex" : "hidden lg:flex"} h-full min-h-max`}>
           
-          <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-sm">
-            <h3 className="font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3">Filter Transaksi</h3>
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-sm flex flex-col h-full">
+            <h3 className="font-bold text-slate-800 mb-5 border-b border-slate-100 pb-3 shrink-0">Filter Transaksi</h3>
             
             {/* Tab Tipe Transaksi */}
             <div className="flex flex-col gap-2 mb-6">

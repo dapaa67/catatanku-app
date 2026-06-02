@@ -1,4 +1,5 @@
-import { Pencil, Trash2, CheckCircle, RefreshCw, Plus, X } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Trash2, CheckCircle, RefreshCw, Plus, X, AlertTriangle } from "lucide-react";
 
 export interface Wallet {
   id: string;
@@ -26,7 +27,12 @@ export function SelectWalletModal({
   isOpen, onClose, wallets, activeWalletId, totalBalance, isBalanceHidden, 
   onSelectWallet, onAddClick, onEditWalletClick, onDeleteWalletClick, onTransferClick 
 }: SelectWalletModalProps) {
-  if (!isOpen) return null;
+  const [walletToDelete, setWalletToDelete] = useState<string | null>(null);
+
+  if (!isOpen) {
+    if (walletToDelete) setWalletToDelete(null); // Reset when closed
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -106,7 +112,7 @@ export function SelectWalletModal({
                     <Pencil size={18} />
                   </button>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); onDeleteWalletClick?.(wallet.id); }}
+                    onClick={(e) => { e.stopPropagation(); setWalletToDelete(wallet.id); }}
                     className="hover:text-red-500 transition-colors cursor-pointer"
                   >
                     <Trash2 size={18} />
@@ -148,6 +154,44 @@ export function SelectWalletModal({
           <Plus size={20} />
           <span>Tambah Tabungan</span>
         </button>
+
+        {/* Overlay Konfirmasi Hapus Dompet */}
+        {walletToDelete && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md rounded-3xl p-4 animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl border border-red-100/50 transform transition-all animate-in zoom-in-95 duration-300 text-center relative overflow-hidden">
+              {/* Latar Belakang Abstrak Merah */}
+              <div className="absolute top-0 right-0 -mt-10 -mr-10 w-32 h-32 bg-red-50 rounded-full blur-3xl opacity-60"></div>
+              <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-32 h-32 bg-orange-50 rounded-full blur-3xl opacity-60"></div>
+
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner border border-red-100">
+                  <AlertTriangle size={36} strokeWidth={1.5} className="drop-shadow-sm" />
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-800 mb-2">Hapus Dompet?</h3>
+                <p className="text-sm text-slate-500 mb-8 leading-relaxed px-2">
+                  Semua transaksi yang ada di dompet ini akan terhapus selamanya. Pastikan tidak ada data penting ya!
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={() => {
+                      onDeleteWalletClick?.(walletToDelete);
+                      setWalletToDelete(null);
+                    }}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-bold hover:from-red-600 hover:to-red-700 transition-all shadow-lg shadow-red-500/30 transform hover:-translate-y-0.5 text-sm cursor-pointer"
+                  >
+                    Ya, Hapus Permanen
+                  </button>
+                  <button 
+                    onClick={() => setWalletToDelete(null)}
+                    className="w-full py-4 rounded-xl bg-slate-50 text-slate-600 font-bold hover:bg-slate-100 transition-colors text-sm cursor-pointer"
+                  >
+                    Batal, Kembali
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

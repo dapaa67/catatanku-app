@@ -362,12 +362,29 @@ export default function DashboardPage() {
                           </linearGradient>
                         </defs>
                       </svg>
-                      {/* Tooltip Nilai Terakhir */}
-                      <div className="absolute top-0 right-0 bg-white border border-slate-200 shadow-md rounded-md px-2 py-1 flex flex-col items-center translate-x-4 -translate-y-4">
-                        <span className="text-xs font-bold text-slate-800 leading-tight">
-                          {new Intl.NumberFormat("id-ID").format(lastVal)}
-                        </span>
-                        <span className="text-[10px] text-slate-500 leading-tight">{lastLabel}</span>
+                      {/* Interactive Hitboxes untuk Tooltip */}
+                      <div className="absolute inset-0 flex justify-between z-20">
+                        {summary?.trendLast6Months?.map((t, idx, arr) => {
+                          const val = chartType === "expense" ? t.expense : t.income;
+                          const formattedVal = new Intl.NumberFormat("id-ID").format(val);
+                          
+                          // Default show tooltip for the last item, but let hover/focus override others
+                          // By using a group, hover and focus on this invisible column triggers the tooltip
+                          return (
+                            <button 
+                              key={idx}
+                              className="group flex-1 flex flex-col items-center h-full outline-none cursor-crosshair bg-transparent relative z-0 hover:z-50 focus:z-50 active:z-50"
+                            >
+                              <div className="w-px h-full bg-slate-400 border-dashed opacity-0 group-hover:opacity-50 group-focus:opacity-50 group-active:opacity-50 transition-opacity pointer-events-none"></div>
+                              
+                              {/* Tooltip Popup */}
+                              <div className="absolute top-0 transform -translate-y-4 opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-active:opacity-100 transition-opacity bg-slate-800 text-white shadow-xl rounded-lg px-3 py-1.5 flex flex-col items-center pointer-events-none">
+                                <span className="text-xs font-bold leading-tight">Rp {formattedVal}</span>
+                                <span className="text-[10px] leading-tight text-slate-300">{t.month}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 

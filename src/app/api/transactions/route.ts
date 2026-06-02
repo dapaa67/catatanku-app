@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     where: {
       walletId: walletId && walletId !== "all" ? walletId : { in: walletIds },
       ...(type && { type: type as "INCOME" | "EXPENSE" }),
-      ...(category && { category }),
+      ...(category && { category: { equals: category, mode: "insensitive" } }),
       ...(from && to && { date: { gte: new Date(from), lte: new Date(to) } })
     },
     orderBy: { date: "desc" },

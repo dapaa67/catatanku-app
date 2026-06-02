@@ -282,26 +282,26 @@ export default function AnalisisPage() {
                       const expenseHeight = maxVal > 0 ? (data.expense / maxVal) * 100 : 0;
 
                       return (
-                        <div key={idx} className="flex flex-col items-center h-full justify-end group w-full max-w-[60px]">
+                        <div key={idx} className="flex flex-col items-center h-full justify-end w-full max-w-[60px]">
                           <div className="flex items-end gap-1 sm:gap-2 h-full w-full justify-center">
                             {/* Pemasukan Bar */}
-                            <div 
-                              className="w-3 sm:w-6 bg-[#10b981] rounded-t-sm transition-all duration-500 relative group"
+                            <button 
+                              className="w-3 sm:w-6 bg-[#10b981] rounded-t-sm transition-all duration-500 relative group cursor-crosshair outline-none focus:bg-[#059669]"
                               style={{ height: `${incomeHeight}%` }}
                             >
-                              <div className="absolute opacity-0 group-hover:opacity-100 -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded transition-opacity">
+                              <div className="absolute opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-active:opacity-100 -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded transition-opacity z-20 pointer-events-none">
                                 {formatRupiah(data.income)}
                               </div>
-                            </div>
+                            </button>
                             {/* Pengeluaran Bar */}
-                            <div 
-                              className="w-3 sm:w-6 bg-[#ef4444] rounded-t-sm transition-all duration-500 relative group"
+                            <button 
+                              className="w-3 sm:w-6 bg-[#ef4444] rounded-t-sm transition-all duration-500 relative group cursor-crosshair outline-none focus:bg-[#dc2626]"
                               style={{ height: `${expenseHeight}%` }}
                             >
-                              <div className="absolute opacity-0 group-hover:opacity-100 -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded transition-opacity">
+                              <div className="absolute opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-active:opacity-100 -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded transition-opacity z-20 pointer-events-none">
                                 {formatRupiah(data.expense)}
                               </div>
-                            </div>
+                            </button>
                           </div>
                         </div>
                       )
@@ -329,7 +329,7 @@ export default function AnalisisPage() {
         {/* Pengeluaran */}
         <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8 border-b sm:border-0 border-slate-100 pb-4 sm:pb-0">
-            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top 5 Kategori Pengeluaran</h3>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top Kategori Pengeluaran</h3>
             <span className="text-[10px] md:text-xs font-bold bg-red-100 text-red-600 px-3 py-1 rounded-full">{monthName} {yearStr}</span>
           </div>
           <div className="flex flex-col gap-6">
@@ -359,7 +359,7 @@ export default function AnalisisPage() {
         {/* Pemasukan */}
         <div className="bg-white border border-primary/30 rounded-3xl p-5 md:p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-8 border-b sm:border-0 border-slate-100 pb-4 sm:pb-0">
-            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top 5 Kategori Pemasukan</h3>
+            <h3 className="font-bold text-slate-800 text-sm md:text-base">Top Kategori Pemasukan</h3>
             <span className="text-[10px] md:text-xs font-bold bg-green-100 text-green-600 px-3 py-1 rounded-full">{monthName} {yearStr}</span>
           </div>
           <div className="flex flex-col gap-6">

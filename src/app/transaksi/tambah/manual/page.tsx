@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Loader2, Sparkles, Trash2, ArrowRight, Zap, HelpCircle } from "lucide-react";
 
-const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Tempat Tinggal", "Kesehatan", "Hiburan", "Lain-lain"];
+const EXPENSE_CATEGORIES = ["Konsumsi", "Belanja", "Transportasi", "Tagihan", "Kesehatan", "Hiburan", "Lain-lain"];
 const INCOME_CATEGORIES = ["Pendapatan", "Investasi", "Lain-lain"];
 
 type Wallet = {
@@ -45,33 +45,82 @@ export default function TambahTransaksiPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [isClient, setIsClient] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   // Inisialisasi komponen dan fetch data dompet
   useEffect(() => {
     setIsClient(true);
     
-    // Auto-restore drafts dari local storage supaya tidak hilang
-    const savedDrafts = localStorage.getItem("catatanku_manual_drafts");
-    const savedInput = localStorage.getItem("catatanku_manual_input");
+    const init = async () => {
+      const fetchedWallets = await fetchWallets();
+      
+      const searchParams = new URLSearchParams(window.location.search);
+      const id = searchParams.get('editId');
+      
+      if (id) {
+        setIsEditing(true);
+        setEditId(id);
+        
+        try {
+          const res = await fetch(`/api/transactions/${id}`);
+          if (res.ok) {
+            const json = await res.json();
+            const tx = json.data;
+            const dt = new Date(tx.date);
+            
+            const draft: DraftTransaction = {
+              id: tx.id,
+              name: tx.description,
+              amount: Number(tx.amount),
+              type: tx.type === "INCOME" ? "pemasukan" : "pengeluaran",
+              category: tx.category,
+              date: dt.toISOString().split("T")[0],
+              time: dt.toTimeString().split(" ")[0].substring(0, 5),
+              isLoading: false,
+              originalInput: "",
+              originalCategory: null,
+              isCategoryCorrect: null
+            };
+            setDrafts([draft]);
+            
+            if (fetchedWallets && fetchedWallets.length > 0) {
+              const txWallet = fetchedWallets.find((w: Wallet) => w.id === tx.walletId);
+              if (txWallet) setSelectedWallet(txWallet);
+            }
+          } else {
+            setError("Gagal memuat data transaksi untuk diedit");
+          }
+        } catch (e) {
+          setError("Kesalahan jaringan saat memuat transaksi");
+        }
+      } else {
+        // Auto-restore drafts dari local storage supaya tidak hilang (hanya jika BUKAN mode edit)
+        const savedDrafts = localStorage.getItem("catatanku_manual_drafts");
+        const savedInput = localStorage.getItem("catatanku_manual_input");
+        
+        if (savedDrafts) {
+          try { setDrafts(JSON.parse(savedDrafts)); } catch (e) {}
+        }
+        if (savedInput) {
+          setNaturalInput(savedInput);
+        }
+      }
+    };
     
-    if (savedDrafts) {
-      try { setDrafts(JSON.parse(savedDrafts)); } catch (e) {}
-    }
-    if (savedInput) {
-      setNaturalInput(savedInput);
-    }
-
-    fetchWallets();
+    init().finally(() => setIsInitialized(true));
   }, []);
 
   // Auto-save ke local storage setiap kali ada perubahan
   useEffect(() => {
-    if (isClient) {
+    if (isClient && isInitialized && !isEditing) {
       localStorage.setItem("catatanku_manual_drafts", JSON.stringify(drafts));
       localStorage.setItem("catatanku_manual_input", naturalInput);
     }
-  }, [drafts, naturalInput, isClient]);
+  }, [drafts, naturalInput, isClient, isInitialized, isEditing]);
 
   const fetchWallets = async () => {
     try {
@@ -80,12 +129,14 @@ export default function TambahTransaksiPage() {
         const data = await res.json();
         if (data.data && data.data.length > 0) {
           setWallets(data.data);
-          setSelectedWallet(data.data[0]);
+          if (!selectedWallet) setSelectedWallet(data.data[0]);
+          return data.data;
         }
       }
     } catch (err) {
       console.error("Gagal mengambil data dompet:", err);
     }
+    return null;
   };
 
   // Helper untuk mengekstrak nominal dan nama transaksi dari input teks
@@ -168,24 +219,54 @@ export default function TambahTransaksiPage() {
               
               // Sesuaikan kategori jika nama transaksi mengindikasikan pemasukan
               const lowerName = draft.name.toLowerCase();
-              const incomeKeywords = ["gaji", "arisan", "dapat", "terima", "bonus", "cair", "profit", "dividen", "jual", "refund"];
-              let hasIncomeKeyword = incomeKeywords.some(kw => lowerName.includes(kw));
+              
+              // Keywords untuk Pendapatan (Active/Expected)
+              const activeIncomeKeywords = ["gaji", "fee", "bayaran", "project", "proyek", "thr", "lembur", "honor", "jual", "laba"];
+              // Keywords untuk Investasi
+              const investmentKeywords = ["profit", "dividen", "bunga", "saham", "reksa dana", "crypto", "kripto"];
+              // Keywords untuk Lain-lain (Passive/Unexpected)
+              const passiveIncomeKeywords = ["cashback", "promo", "giveaway", "nemu", "hadiah", "refund", "arisan", "kembalian"];
+              // Keywords generik
+              const genericIncomeKeywords = ["dapat", "terima", "cair", "bonus"];
+
+              let hasIncomeKeyword = false;
+              let forcedIncomeCategory = "";
+
+              if (activeIncomeKeywords.some(kw => lowerName.includes(kw))) {
+                hasIncomeKeyword = true;
+                forcedIncomeCategory = "Pendapatan";
+              } else if (investmentKeywords.some(kw => lowerName.includes(kw))) {
+                hasIncomeKeyword = true;
+                forcedIncomeCategory = "Investasi";
+              } else if (passiveIncomeKeywords.some(kw => lowerName.includes(kw))) {
+                hasIncomeKeyword = true;
+                forcedIncomeCategory = "Lain-lain";
+              } else if (genericIncomeKeywords.some(kw => lowerName.includes(kw))) {
+                hasIncomeKeyword = true;
+                forcedIncomeCategory = "Pendapatan"; // Default ke Pendapatan untuk kata generik
+              }
               
               // Penanganan spesifik untuk transaksi terkait utang agar arah saldonya tepat
-              // Contoh: "rusdi bayar utang" → Pemasukan
-              // Contoh: "bayar utang ke rusdi" → Pengeluaran
-              if (lowerName.includes("bayar utang") || lowerName.includes("bayar hutang")) {
+              // Contoh: "rusdi bayar utang" â†’ Pemasukan (Lain-lain)
+              // Contoh: "bayar utang ke rusdi" â†’ Pengeluaran
+              if (lowerName.includes("bayar utang") || lowerName.includes("bayar hutang") || lowerName.includes("bayar pinjaman")) {
                 if (!lowerName.trim().startsWith("bayar")) {
                   hasIncomeKeyword = true;
+                  forcedIncomeCategory = "Lain-lain"; // Uang balik masuk ke Lain-lain
+                } else {
+                  hasIncomeKeyword = false; // Reset jadi pengeluaran
                 }
               }
               
               let isIncome = hasIncomeKeyword || INCOME_CATEGORIES.includes(predictedKategori);
               
-              if (hasIncomeKeyword && !INCOME_CATEGORIES.includes(predictedKategori)) {
-                // Jika terindikasi kuat sebagai pemasukan namun AI memprediksi pengeluaran, gunakan fallback ke Pendapatan
-                predictedKategori = "Pendapatan";
+              if (hasIncomeKeyword) {
+                // Terapkan override dari keyword untuk menjamin klasifikasi akurat
+                predictedKategori = forcedIncomeCategory;
                 isIncome = true;
+              } else if (isIncome && !INCOME_CATEGORIES.includes(predictedKategori)) {
+                // Jika AI ngaco ngasih kategori di luar daftar, paksa ke Pendapatan
+                predictedKategori = "Pendapatan";
               }
               
               // Fallback untuk transaksi makanan/minuman yang salah diklasifikasikan sebagai Kesehatan oleh model AI
@@ -279,10 +360,9 @@ export default function TambahTransaksiPage() {
     setIsSubmitting(true);
     
     try {
-      // Simpan semua draft secara berurutan agar error mudah dilacak
-      for (const draft of drafts) {
+      if (isEditing && editId && drafts.length === 1) {
+        const draft = drafts[0];
         const combinedDateTimeString = `${draft.date}T${draft.time}:00`;
-        
         const payload = {
           walletId: selectedWallet.id,
           type: draft.type === "pemasukan" ? "INCOME" : "EXPENSE",
@@ -291,25 +371,51 @@ export default function TambahTransaksiPage() {
           description: draft.name, 
           note: draft.name,
           date: new Date(combinedDateTimeString).toISOString(),
-          ...(draft.originalCategory && {
-            aiTrainingData: {
-              inputText: draft.originalInput,
-              guessedCategory: draft.originalCategory,
-              correctCategory: draft.category,
-              isCorrect: draft.category === draft.originalCategory
-            }
-          })
         };
 
-        const res = await fetch("/api/transactions", {
-          method: "POST",
+        const res = await fetch(`/api/transactions/${editId}`, {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
           const data = await res.json();
-          throw new Error(data.error || `Gagal menyimpan transaksi: ${draft.name}`);
+          throw new Error(data.error || "Gagal mengupdate transaksi");
+        }
+      } else {
+        // Simpan semua draft secara berurutan agar error mudah dilacak
+        for (const draft of drafts) {
+          const combinedDateTimeString = `${draft.date}T${draft.time}:00`;
+          
+          const payload = {
+            walletId: selectedWallet.id,
+            type: draft.type === "pemasukan" ? "INCOME" : "EXPENSE",
+            amount: draft.amount,
+            category: draft.category,
+            description: draft.name, 
+            note: draft.name,
+            date: new Date(combinedDateTimeString).toISOString(),
+            ...(draft.originalCategory && {
+              aiTrainingData: {
+                inputText: draft.originalInput,
+                guessedCategory: draft.originalCategory,
+                correctCategory: draft.category,
+                isCorrect: draft.category === draft.originalCategory
+              }
+            })
+          };
+
+          const res = await fetch("/api/transactions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || `Gagal menyimpan transaksi: ${draft.name}`);
+          }
         }
       }
 
@@ -343,10 +449,13 @@ export default function TambahTransaksiPage() {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-xl md:text-2xl font-bold mb-2 flex items-center gap-2">
-            Catat Cepat
+            {isEditing ? "Edit Transaksi" : "Catat Cepat"}
           </h1>
           <p className="text-xs md:text-sm text-white/90 max-w-md text-center leading-relaxed mb-6 px-4">
-            Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis.
+            {isEditing 
+              ? "Ubah detail transaksi Anda di bawah ini dan klik Simpan Perubahan."
+              : "Ketik transaksimu sekaligus pisahkan dengan koma. Sistem akan memilahnya otomatis."
+            }
           </p>
           
           {/* Pilihan Dompet */}
@@ -394,28 +503,30 @@ export default function TambahTransaksiPage() {
         </div>
       )}
 
-      {/* Form Input Natural */}
-      <div className="bg-white rounded-3xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all focus-within:shadow-[0_8px_40px_rgba(15,154,149,0.12)] focus-within:border-primary/30 group">
-        <div className="relative bg-slate-50/70 rounded-2xl overflow-hidden border border-transparent group-focus-within:border-primary/10 transition-colors">
-          <textarea
-            value={naturalInput}
-            onChange={(e) => setNaturalInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Contoh: Beli makan siang 25k, gojek 15rb, token listrik 100k..."
-            className="w-full bg-transparent border-none p-4 md:p-6 text-slate-900 text-base md:text-lg font-medium placeholder:text-slate-400 outline-none resize-none h-32 md:h-36"
-          ></textarea>
-          
-          <div className="absolute bottom-3 left-4 right-3 flex items-center justify-between">
-            <button
-              onClick={handleParseInput}
-              disabled={isParsing || !naturalInput.trim()}
-              className="ml-auto px-4 py-2 md:px-6 md:py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-sm md:text-base font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:scale-100 disabled:shadow-none shadow-lg shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
-            >
-              <span>Proses Sekarang</span>
-            </button>
+      {/* Form Input Natural (Sembunyikan saat mode edit) */}
+      {!isEditing && (
+        <div className="bg-white rounded-3xl p-3 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all focus-within:shadow-[0_8px_40px_rgba(15,154,149,0.12)] focus-within:border-primary/30 group">
+          <div className="relative bg-slate-50/70 rounded-2xl overflow-hidden border border-transparent group-focus-within:border-primary/10 transition-colors">
+            <textarea
+              value={naturalInput}
+              onChange={(e) => setNaturalInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Contoh: Beli makan siang 25k, gojek 15rb, token listrik 100k..."
+              className="w-full bg-transparent border-none p-4 md:p-6 text-slate-900 text-base md:text-lg font-medium placeholder:text-slate-400 outline-none resize-none h-32 md:h-36"
+            ></textarea>
+            
+            <div className="absolute bottom-3 left-4 right-3 flex items-center justify-between">
+              <button
+                onClick={handleParseInput}
+                disabled={isParsing || !naturalInput.trim()}
+                className="ml-auto px-4 py-2 md:px-6 md:py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-sm md:text-base font-semibold transition-all transform hover:scale-105 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:hover:scale-100 disabled:shadow-none shadow-lg shadow-slate-900/20 flex items-center gap-2 cursor-pointer"
+              >
+                <span>Proses Sekarang</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Daftar Draft Transaksi */}
       {drafts.length > 0 && (
@@ -427,12 +538,14 @@ export default function TambahTransaksiPage() {
               </span>
               Draft Transaksi
             </h2>
-            <button 
-              onClick={() => setDrafts([])}
-              className="text-sm font-medium text-red-500 hover:text-red-600 cursor-pointer"
-            >
-              Hapus Semua
-            </button>
+            {!isEditing && (
+              <button 
+                onClick={() => setDrafts([])}
+                className="text-sm font-medium text-red-500 hover:text-red-600 cursor-pointer"
+              >
+                Hapus Semua
+              </button>
+            )}
           </div>
 
           <div className="flex flex-col gap-4">
@@ -472,12 +585,14 @@ export default function TambahTransaksiPage() {
                       </button>
                     </div>
                     
-                    <button 
-                      onClick={() => removeDraft(draft.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {!isEditing && (
+                      <button 
+                        onClick={() => removeDraft(draft.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -515,24 +630,23 @@ export default function TambahTransaksiPage() {
                        <div>
                           <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Kategori</label>
                           
-                          {/* Input Kategori (Combobox) */}
+                          {/* Dropdown Kategori */}
                           <div className="relative mt-1">
-                            <input
-                              type="text"
-                              list={`categories-${draft.id}`}
+                            <select
                               value={draft.category}
                               onChange={(e) => updateDraft(draft.id, 'category', e.target.value)}
-                              placeholder="Ketik kategori baru..."
-                              className="w-full bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-4 py-2 text-sm text-slate-900 font-medium outline-none transition-colors"
-                            />
-                            <datalist id={`categories-${draft.id}`}>
+                              className="w-full bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white rounded-xl px-4 py-2 text-sm text-slate-900 font-medium outline-none transition-colors appearance-none cursor-pointer"
+                            >
                               {(() => {
                                 const options = draft.type === 'pemasukan' ? [...INCOME_CATEGORIES] : [...EXPENSE_CATEGORIES];
                                 return options.map(cat => (
-                                  <option key={cat} value={cat} />
+                                  <option key={cat} value={cat}>{cat}</option>
                                 ));
                               })()}
-                            </datalist>
+                            </select>
+                            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                              <ChevronDown className="w-4 h-4 text-slate-400" />
+                            </div>
                           </div>
                         </div>
 
@@ -564,23 +678,25 @@ export default function TambahTransaksiPage() {
           </div>
 
           {/* Tombol Simpan Melayang */}
-          <div className="fixed bottom-6 left-0 right-0 lg:left-64 flex justify-center z-40 pointer-events-none px-4">
-            <div className="bg-white/90 backdrop-blur-xl border border-slate-200/50 p-3 rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex items-center justify-between gap-6 pointer-events-auto transform transition-all hover:-translate-y-1 w-full max-w-xl mx-auto">
-              <div className="px-4 hidden sm:block">
-                <span className="text-sm font-semibold text-slate-600">
-                  <strong className="text-primary mr-1">{drafts.length}</strong> 
-                  transaksi siap disimpan
-                </span>
-              </div>
-              <button 
-                onClick={handleSubmitAll}
-                disabled={isSubmitting || drafts.some(d => d.isLoading)}
-                className="w-full sm:flex-1 bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              >
-                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                <span>Simpan Semua</span>
-              </button>
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 md:p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4 z-40">
+            <div className="flex flex-col">
+              <span className="text-slate-500 text-sm font-medium">{isEditing ? 'Total Perubahan' : 'Total Catatan'}</span>
+              <span className="text-2xl font-black text-slate-800">
+                {drafts.length} <span className="text-base font-bold text-slate-400">transaksi</span>
+              </span>
             </div>
+            
+            <button
+              onClick={handleSubmitAll}
+              disabled={isSubmitting || drafts.some(d => d.isLoading)}
+              className="w-full md:w-auto px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/30 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
+            >
+              {isSubmitting ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> {isEditing ? 'Menyimpan...' : 'Menyimpan Semua...'}</>
+              ) : (
+                <>{isEditing ? 'Simpan Perubahan' : 'Simpan Semua'} <ArrowRight className="w-5 h-5" /></>
+              )}
+            </button>
           </div>
         </div>
       )}
@@ -590,22 +706,23 @@ export default function TambahTransaksiPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-xl relative animate-in zoom-in-95 duration-200">
             <HelpCircle className="w-24 h-24 text-primary mx-auto mb-6" strokeWidth={1.5} />
-            
-            <h3 className="text-xl font-bold text-center text-slate-800 mb-3">Konfirmasi Kategori</h3>
+            <h3 className="text-xl font-bold text-center text-slate-800 mb-3">{isEditing ? 'Simpan Perubahan?' : 'Konfirmasi Kategori'}</h3>
             <p className="text-sm text-center text-slate-500 mb-8 leading-relaxed">
-              Apakah kategori yang ditebak AI sudah benar semua? Pastikan kembali agar AI kita bisa belajar dari koreksi Anda.
+              {isEditing 
+                ? 'Apakah Anda yakin ingin memperbarui data transaksi ini?' 
+                : 'Apakah kategori yang ditebak AI sudah benar semua? Pastikan kembali agar AI kita bisa belajar dari koreksi Anda.'} Data akan dimasukkan ke dompet <span className="font-bold text-primary">{selectedWallet?.name}</span>.
             </p>
             
             <div className="flex flex-col gap-3">
               <button 
                 onClick={executeSubmitAll}
-                className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-md text-sm"
+                className="w-full py-3.5 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-md text-sm cursor-pointer"
               >
-                Ya, Sudah Benar (Simpan)
+                {isEditing ? 'Ya, Simpan Perubahan' : 'Ya, Sudah Benar (Simpan)'}
               </button>
               <button 
                 onClick={() => setShowConfirmModal(false)}
-                className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-sm"
+                className="w-full py-3.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-sm cursor-pointer"
               >
                 Belum, Cek Lagi
               </button>
