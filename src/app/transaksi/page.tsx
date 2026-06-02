@@ -348,7 +348,7 @@ export default function RiwayatTransaksiPage() {
         </div>
 
         {/* Daftar transaksi di kanan */}
-        <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8 min-h-[500px]">
+        <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8">
           {isLoading ? (
             <div className="flex justify-center p-12 bg-white rounded-3xl border border-slate-100 shadow-sm">
               <span className="text-slate-500 font-medium flex items-center gap-2">
@@ -357,7 +357,7 @@ export default function RiwayatTransaksiPage() {
               </span>
             </div>
           ) : transactionGroups.length > 0 ? (
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-8 shadow-sm flex flex-col" style={{ maxHeight: 'calc(100dvh - 280px)', minHeight: '400px' }}>
               
               {/* Baris Pilihan Atas */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
@@ -406,7 +406,7 @@ export default function RiwayatTransaksiPage() {
                 </div>
               </div>
 
-              <div className="overflow-y-auto pr-3 h-full" style={{ scrollbarWidth: 'thin' }}>
+              <div className="overflow-y-auto flex-1 pr-2" style={{ scrollbarWidth: 'thin' }}>
                 {transactionGroups.map((group, idx) => (
                   <div key={idx} className="flex flex-col gap-3 mb-8 last:mb-0">
                     <h3 className="text-sm font-bold text-slate-500 mb-2 border-b border-slate-100 pb-2 sticky top-0 bg-white z-10 pt-1">{group.date}</h3>

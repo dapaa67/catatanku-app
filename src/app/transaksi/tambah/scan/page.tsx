@@ -58,7 +58,7 @@ export default function ScanStrukPage() {
       const base64Str = await fileToBase64(file);
       const mimeType = file.type;
 
-      // Kirim ke backend untuk diproses Gemini — set progress ke 50% supaya user tidak bingung
+      // Kirim gambar ke Gemini untuk diekstrak, set progress ke 50% sebagai indikator awal
       setProgress(50);
       
       const response = await fetch('/api/scan-receipt', {
@@ -89,7 +89,7 @@ export default function ScanStrukPage() {
       const dateStr = now.toISOString().split('T')[0];
       const timeStr = now.toTimeString().split(' ')[0].substring(0, 5);
       
-      // Buat draft transaksi dari setiap item yang terdeteksi di struk
+      // Buat draft transaksi berdasarkan item yang berhasil dideteksi dari struk
       let newDrafts = parsedItems.map((item: { name: string, amount: number }) => ({
         id: generateId(),
         originalInput: `Scan struk: ${item.name} Rp ${item.amount}`,
@@ -103,7 +103,7 @@ export default function ScanStrukPage() {
         isLoading: false,
       }));
 
-      // Prediksi kategori tiap item menggunakan AI
+      // Lakukan prediksi kategori untuk setiap item menggunakan AI
       await Promise.all(
         newDrafts.map(async (draft: any) => {
           try {
@@ -116,7 +116,15 @@ export default function ScanStrukPage() {
             if (res.ok) {
               const data = await res.json();
               if (data.hasil && data.hasil.length > 0) {
-                const predictedKategori = data.hasil[0].kategori;
+                let predictedKategori = data.hasil[0].kategori;
+                
+                // Fallback untuk item makanan/minuman yang salah diprediksi sebagai Kesehatan oleh model
+                const lowerName = draft.name.toLowerCase();
+                const foodKeywords = ["makan", "minum", "nasi", "lalapan", "kopi", "teh", "es", "roti", "soto", "mie", "ayam", "bebek", "ikan", "bakso", "sate"];
+                if (foodKeywords.some(kw => lowerName.includes(kw)) && predictedKategori === "Kesehatan") {
+                  predictedKategori = "Konsumsi";
+                }
+
                 draft.category = predictedKategori;
                 draft.originalCategory = predictedKategori;
               }
@@ -137,7 +145,7 @@ export default function ScanStrukPage() {
       drafts.push(...newDrafts);
       localStorage.setItem("catatanku_manual_drafts", JSON.stringify(drafts));
       
-      // Redirect ke halaman review draft
+      // Arahkan pengguna ke halaman Catat Cepat untuk meninjau hasil scan
       router.push("/transaksi/tambah/manual");
       
     } catch (err: any) {

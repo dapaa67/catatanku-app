@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, Plus, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Sparkles, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import TopUpModal from "../components/TopUpModal";
+import EditGoalModal from "../components/EditGoalModal";
+import EditDepositModal from "../components/EditDepositModal";
 
 interface ApiSavingTransaction {
   id: string;
@@ -35,8 +37,10 @@ export default function TabunganDetailPage() {
   const [goal, setGoal] = useState<ApiSavingGoalDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedDeposit, setSelectedDeposit] = useState<ApiSavingTransaction | null>(null);
 
   const fetchDetail = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -92,25 +96,34 @@ export default function TabunganDetailPage() {
   const kekuranganDisplay = isAchieved ? 0 : goal.remainingAmount;
   const progressCapped = Math.min(100, goal.progressPercent);
 
-  let dynamicDaysLeft = 0;
   let dynamicDeadlineStr = goal.deadline;
   let dynamicTimesLeft = 0;
   let planUnit = "hari";
 
-  if (!isAchieved && goal.deadline) {
-    const timeDiff = new Date(goal.deadline).getTime() - new Date().getTime();
-    dynamicDaysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    if (dynamicDaysLeft < 0) dynamicDaysLeft = 0;
+  if (!isAchieved) {
+    // Tentukan unit waktu berdasarkan planType
+    if (goal.planType === "MINGGUAN") planUnit = "minggu";
+    else if (goal.planType === "BULANAN") planUnit = "bulan";
 
-    let daysPerPlan = 1;
-    if (goal.planType === "MINGGUAN") {
-      daysPerPlan = 7;
-      planUnit = "minggu";
-    } else if (goal.planType === "BULANAN") {
-      daysPerPlan = 30;
-      planUnit = "bulan";
+    if (goal.deadline) {
+      // Pakai deadline dari database (sudah dihitung AI)
+      const timeDiff = new Date(goal.deadline).getTime() - new Date().getTime();
+      const dynamicDaysLeft = Math.max(0, Math.ceil(timeDiff / (1000 * 3600 * 24)));
+      let daysPerPlan = 1;
+      if (goal.planType === "MINGGUAN") daysPerPlan = 7;
+      else if (goal.planType === "BULANAN") daysPerPlan = 30;
+      dynamicTimesLeft = Math.ceil(dynamicDaysLeft / daysPerPlan);
+    } else if (goal.planAmount && Number(goal.planAmount) > 0) {
+      // Fallback: hitung manual dari kekurangan dibagi nominal plan
+      dynamicTimesLeft = Math.ceil(goal.remainingAmount / Number(goal.planAmount));
+      // Hitung perkiraan deadline berdasarkan hari
+      let daysPerPlan = 1;
+      if (goal.planType === "MINGGUAN") daysPerPlan = 7;
+      else if (goal.planType === "BULANAN") daysPerPlan = 30;
+      const estimasiDeadline = new Date();
+      estimasiDeadline.setDate(estimasiDeadline.getDate() + dynamicTimesLeft * daysPerPlan);
+      dynamicDeadlineStr = estimasiDeadline.toISOString();
     }
-    dynamicTimesLeft = Math.ceil(dynamicDaysLeft / daysPerPlan);
   }
 
   return (
@@ -123,13 +136,22 @@ export default function TabunganDetailPage() {
           </Link>
           <h1 className="text-xl font-bold text-slate-800 flex-1 text-center pr-9">{goal.name}</h1>
         </div>
-        <button 
-          onClick={() => setShowDeleteConfirm(true)}
-          className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
-          title="Hapus Tabungan"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors"
+            title="Edit Tabungan"
+          >
+            <Pencil className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
+            title="Hapus Tabungan"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Kartu Info Utama */}
@@ -231,9 +253,18 @@ export default function TabunganDetailPage() {
                     {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <span className={`text-sm sm:text-base font-bold shrink-0 ${Number(item.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
-                  {Number(item.amount) < 0 ? '-' : '+'}{formatRupiah(Math.abs(Number(item.amount)))}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm sm:text-base font-bold shrink-0 ${Number(item.amount) < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                    {Number(item.amount) < 0 ? '-' : '+'}{formatRupiah(Math.abs(Number(item.amount)))}
+                  </span>
+                  <button 
+                    onClick={() => setSelectedDeposit(item)}
+                    className="p-1.5 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Edit Riwayat"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -256,11 +287,39 @@ export default function TabunganDetailPage() {
         onClose={() => setIsTopUpOpen(false)}
         onSuccess={() => {
           fetchDetail(true);
-          // bisa tambahkan notifikasi di sini kalau diperlukan
         }}
         goalId={id}
         defaultAmount={goal.planAmount ? Number(goal.planAmount) : undefined}
       />
+
+      <EditGoalModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSuccess={() => fetchDetail(true)}
+        goalId={id}
+        initialData={{
+          name: goal.name,
+          targetAmount: Number(goal.targetAmount),
+          planType: goal.planType ?? null,
+          planAmount: goal.planAmount ? Number(goal.planAmount) : null,
+          photoUrl: goal.photoUrl ?? null,
+        }}
+      />
+      
+      {/* Edit Deposit Modal */}
+      {selectedDeposit && (
+        <EditDepositModal
+          isOpen={!!selectedDeposit}
+          onClose={() => setSelectedDeposit(null)}
+          onSuccess={() => fetchDetail(true)}
+          goalId={id}
+          txId={selectedDeposit.id}
+          initialData={{
+            amount: Number(selectedDeposit.amount),
+            note: selectedDeposit.note || "",
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

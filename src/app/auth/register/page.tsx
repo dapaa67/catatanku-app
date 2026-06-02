@@ -23,6 +23,18 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    if (!fullName.trim() || fullName.length < 3) {
+      setError("Nama lengkap harus memiliki minimal 3 karakter.");
+      return;
+    }
+    
+    // Validasi nama hanya boleh huruf, spasi, tanda hubung, atau petik tunggal
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(fullName)) {
+      setError("Nama hanya boleh berisi huruf dan spasi (karakter khusus tidak diizinkan).");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Kata sandi dan konfirmasi tidak cocok.");
       return;
@@ -57,16 +69,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-[100dvh] overflow-hidden">
       {/* Panel Kiri */}
       <AuthLeftPanel />
 
       {/* Panel Kanan — form tepat di tengah */}
-      <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-6 overflow-y-auto">
         <div className="w-full max-w-[400px] my-auto flex-shrink-0">
 
           {/* Logo Mobile */}
-          <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
+          <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
             </div>
@@ -95,7 +107,7 @@ export default function RegisterPage() {
           ) : (
             <>
               {/* Judul */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <h1 className="text-3xl font-bold text-slate-800 mb-1.5">Daftar</h1>
                 <p className="text-slate-500 text-sm">
                   Sudah punya akun?{" "}

@@ -373,8 +373,9 @@ export default function DashboardPage() {
 
                     {/* Label Sumbu X */}
                     <div className="absolute bottom-0 left-0 right-10 flex justify-between text-[10px] font-bold text-slate-400">
-                      <span>{firstLabel}</span>
-                      <span>{lastLabel}</span>
+                      {summary?.trendLast6Months?.map((t, idx) => (
+                        <span key={idx}>{t.month}</span>
+                      ))}
                     </div>
                   </>
                 );

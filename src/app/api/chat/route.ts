@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
     }
 
-    // Ambil semua data keuangan user secara paralel supaya lebih efisien
+    // Ambil data dompet, transaksi, dan tabungan secara paralel untuk mengoptimalkan waktu respons
     const [wallets, transactions, savings] = await Promise.all([
       prisma.wallet.findMany({
         where: { userId: user.id },
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       })
     ]);
 
-    // Format data keuangan menjadi string yang bisa dibaca AI
+    // Konversi data keuangan menjadi format teks yang mudah dipahami oleh AI
     const totalSaldo = wallets.reduce((acc: number, w: any) => acc + Number(w.balance), 0);
     
     const walletContext = wallets.map((w: any) => 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       return `- ${s.name}: ${targetStr}. ${planStr}. ${deadlineStr}`;
     }).join('\n');
 
-    // Susun system prompt yang menyertakan konteks keuangan user
+    // Susun instruksi sistem (system prompt) yang menyertakan konteks finansial pengguna
     const contextString = `[INFORMASI SYSTEM - KONTEKS DATA KEUANGAN TERKINI USER]
 Anda adalah "AI Catatanku", asisten keuangan pribadi anak muda yang super asik, gaul, dan santai.
 ATURAN MEMBALAS:
@@ -72,7 +72,7 @@ ${savingContext || "Belum ada tabungan"}
 [PESAN DARI USER]:
 ${message}`;
 
-    // Kirim pesan ke FastAPI backend dengan timeout yang cukup untuk cold start HuggingFace
+    // Kirim payload ke API AI dengan toleransi timeout yang cukup untuk mengantisipasi cold start pada server
     const aiRes = await fetch(`${FASTAPI_URL}/api/chat/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,10 +88,14 @@ ${message}`;
     }
 
     const aiData = await aiRes.json();
+    let reply = aiData.reply ?? "Maaf, tidak ada respons dari AI.";
 
-    return NextResponse.json({
-      reply: aiData.reply ?? "Maaf, tidak ada respons dari AI."
-    });
+    // Tangkap pesan error limit kuota dari API agar dapat menampilkan peringatan yang lebih ramah pengguna
+    if (reply.includes("429") || reply.includes("RESOURCE_EXHAUSTED") || reply.includes("quota")) {
+      reply = "Waduh bro, AI-nya lagi kepanasan nih (kena limit sistem). Sabar ya, tunggu sekitar 1 menitan terus coba chat lagi! 🙏😂";
+    }
+
+    return NextResponse.json({ reply });
 
   } catch (error: unknown) {
     console.error("Error Asisten AI:", error);

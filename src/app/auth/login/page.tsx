@@ -43,16 +43,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-[100dvh] overflow-hidden">
       {/* Panel Kiri */}
       <AuthLeftPanel />
 
       {/* Panel Kanan — form tepat di tengah */}
-      <div className="flex-1 flex flex-col items-center bg-slate-50 px-6 py-8 overflow-y-auto">
-        <div className="w-full max-w-[400px] my-auto flex-shrink-0">
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6 py-6 overflow-y-auto">
+        <div className="w-full max-w-[400px] flex-shrink-0">
 
           {/* Logo Mobile */}
-          <div className="flex items-center justify-center gap-3 mb-10 lg:hidden">
+          <div className="flex items-center justify-center gap-3 mb-6 lg:hidden">
             <div className="bg-primary p-3 rounded-2xl shadow-sm">
               <NotebookPen className="text-white w-7 h-7" />
             </div>
@@ -60,7 +60,7 @@ export default function LoginPage() {
           </div>
 
           {/* Judul */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h1 className="text-3xl font-bold text-slate-800 mb-1.5">Masuk</h1>
             <p className="text-slate-500 text-sm">
               Belum punya akun?{" "}

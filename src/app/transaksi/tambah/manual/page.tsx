@@ -166,12 +166,12 @@ export default function TambahTransaksiPage() {
             if (data.hasil && data.hasil.length > 0) {
               let predictedKategori = data.hasil[0].kategori;
               
-              // Override otomatis jika nama transaksi jelas-jelas pemasukan
+              // Sesuaikan kategori jika nama transaksi mengindikasikan pemasukan
               const lowerName = draft.name.toLowerCase();
               const incomeKeywords = ["gaji", "arisan", "dapat", "terima", "bonus", "cair", "profit", "dividen", "jual", "refund"];
               let hasIncomeKeyword = incomeKeywords.some(kw => lowerName.includes(kw));
               
-              // Penanganan khusus kata "utang"/"hutang"
+              // Penanganan spesifik untuk transaksi terkait utang agar arah saldonya tepat
               // Contoh: "rusdi bayar utang" → Pemasukan
               // Contoh: "bayar utang ke rusdi" → Pengeluaran
               if (lowerName.includes("bayar utang") || lowerName.includes("bayar hutang")) {
@@ -183,9 +183,15 @@ export default function TambahTransaksiPage() {
               let isIncome = hasIncomeKeyword || INCOME_CATEGORIES.includes(predictedKategori);
               
               if (hasIncomeKeyword && !INCOME_CATEGORIES.includes(predictedKategori)) {
-                // Kalau jelas pemasukan tapi AI bilang pengeluaran, paksa override ke Pendapatan
+                // Jika terindikasi kuat sebagai pemasukan namun AI memprediksi pengeluaran, gunakan fallback ke Pendapatan
                 predictedKategori = "Pendapatan";
                 isIncome = true;
+              }
+              
+              // Fallback untuk transaksi makanan/minuman yang salah diklasifikasikan sebagai Kesehatan oleh model AI
+              const foodKeywords = ["makan", "minum", "nasi", "lalapan", "kopi", "teh", "es", "roti", "soto", "mie", "ayam", "bebek", "ikan", "bakso", "sate"];
+              if (!isIncome && foodKeywords.some(kw => lowerName.includes(kw)) && predictedKategori === "Kesehatan") {
+                predictedKategori = "Konsumsi";
               }
               
               setDrafts(current => current.map(d => {
@@ -207,7 +213,7 @@ export default function TambahTransaksiPage() {
           console.error("Gagal memprediksi kategori untuk:", draft.name);
         }
         
-        // Kalau prediksi gagal, cukup hentikan loading state-nya
+        // Hentikan state loading jika proses prediksi kategori mengalami kegagalan atau timeout
         setDrafts(current => current.map(d => 
           d.id === draft.id ? { ...d, isLoading: false } : d
         ));

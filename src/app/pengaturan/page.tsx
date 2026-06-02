@@ -73,8 +73,15 @@ export default function PengaturanPage() {
 
   // Handler untuk menyimpan perubahan profil
   const handleSaveProfil = async () => {
-    if (!name.trim()) {
-      setProfileMsg({ type: "error", text: "Nama tidak boleh kosong" });
+    if (!name.trim() || name.trim().length < 3) {
+      setProfileMsg({ type: "error", text: "Nama lengkap harus memiliki minimal 3 karakter." });
+      return;
+    }
+
+    // Validasi nama hanya boleh huruf, spasi, tanda hubung, atau petik tunggal
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(name)) {
+      setProfileMsg({ type: "error", text: "Nama hanya boleh berisi huruf dan spasi (karakter khusus tidak diizinkan)." });
       return;
     }
     setIsSaving(true);

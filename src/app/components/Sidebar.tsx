@@ -99,7 +99,7 @@ export default function Sidebar() {
 
       {/* Navigasi Utama */}
       <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 py-6 z-50 transition-transform duration-300 ease-in-out flex-shrink-0
+        fixed lg:sticky top-0 left-0 h-[100dvh] overflow-y-auto flex flex-col w-64 bg-primary text-white px-4 pt-6 pb-8 lg:pb-6 z-50 transition-transform duration-300 ease-in-out flex-shrink-0
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
       `}>
         
