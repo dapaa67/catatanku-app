@@ -686,17 +686,25 @@ export default function TambahTransaksiPage() {
               </span>
             </div>
             
-            <button
-              onClick={handleSubmitAll}
-              disabled={isSubmitting || drafts.some(d => d.isLoading)}
-              className="w-full md:w-auto px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/30 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
-            >
-              {isSubmitting ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> {isEditing ? 'Menyimpan...' : 'Menyimpan Semua...'}</>
-              ) : (
-                <>{isEditing ? 'Simpan Perubahan' : 'Simpan Semua'} <ArrowRight className="w-5 h-5" /></>
-              )}
-            </button>
+            <div className="flex flex-row w-full md:w-auto gap-3">
+              <button
+                onClick={() => router.back()}
+                className="w-full md:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSubmitAll}
+                disabled={isSubmitting || drafts.some(d => d.isLoading)}
+                className="w-full md:w-auto px-8 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/30 transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> {isEditing ? 'Menyimpan...' : 'Menyimpan Semua...'}</>
+                ) : (
+                  <>{isEditing ? 'Simpan Perubahan' : 'Simpan Semua'} <ArrowRight className="w-5 h-5" /></>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
