@@ -435,7 +435,7 @@ export default function TambahTransaksiPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-20">
+    <div className="flex flex-col gap-6 w-full pb-40 md:pb-24">
       {/* Panel Header */}
       <div className="relative rounded-3xl p-6 md:p-8 flex flex-col items-center justify-center text-white shadow-md mb-2">
         {/* Background bentuk abstrak */}
@@ -681,8 +681,8 @@ export default function TambahTransaksiPage() {
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-4 md:p-6 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4 z-40">
             <div className="flex flex-col">
               <span className="text-slate-500 text-sm font-medium">{isEditing ? 'Total Perubahan' : 'Total Catatan'}</span>
-              <span className="text-2xl font-black text-slate-800">
-                {drafts.length} <span className="text-base font-bold text-slate-400">transaksi</span>
+              <span className="text-base font-bold text-slate-800">
+                {drafts.length} transaksi
               </span>
             </div>
             
